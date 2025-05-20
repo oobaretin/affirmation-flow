@@ -1,0 +1,8 @@
+{
+  "name": "AffirmationFlow",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite",
+  "id": "0552f27c"
+}
