@@ -1,0 +1,39 @@
+.privacy-content {
+  --padding-bottom: calc(2rem + var(--ion-safe-area-bottom, 0px));
+}
+
+.privacy-body {
+  padding: 1.5rem;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.privacy-updated {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+  margin: 0 0 1.5rem;
+}
+
+.privacy-body h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--ion-text-color);
+}
+
+.privacy-body p,
+.privacy-body li {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ion-color-medium);
+}
+
+.privacy-body ul {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.privacy-body a {
+  color: var(--ion-color-primary);
+  text-decoration: none;
+}

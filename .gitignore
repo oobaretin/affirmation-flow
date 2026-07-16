@@ -11,7 +11,11 @@
 # production
 /dist
 
-# misc
+# tooling
+/.tools
+.cursor/
+cypress/screenshots/
+
 .DS_Store
 .env.local
 .env.development.local

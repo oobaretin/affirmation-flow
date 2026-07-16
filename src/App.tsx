@@ -10,77 +10,127 @@ import {
   setupIonicReact
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
-import Tab1 from './pages/Tab1';
-import Tab2 from './pages/Tab2';
-import Tab3 from './pages/Tab3';
+import { heart, library, settingsOutline, sunny } from 'ionicons/icons';
+import Today from './pages/Today';
+import Library from './pages/Library';
+import Favorites from './pages/Favorites';
+import Settings from './pages/Settings';
+import Onboarding from './pages/Onboarding';
+import WelcomeBack from './pages/WelcomeBack';
+import SignedOut from './pages/SignedOut';
+import Privacy from './pages/Privacy';
+import { useSettings, SettingsProvider } from './hooks/useSettings';
+import { getLoggedOutDefaultRoute, hasExplicitLogout } from './services/session';
 
-/* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
-
-/* Basic CSS for apps built with Ionic */
 import '@ionic/react/css/normalize.css';
 import '@ionic/react/css/structure.css';
 import '@ionic/react/css/typography.css';
-
-/* Optional CSS utils that can be commented out */
 import '@ionic/react/css/padding.css';
 import '@ionic/react/css/float-elements.css';
 import '@ionic/react/css/text-alignment.css';
 import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
-
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
 import '@ionic/react/css/palettes/dark.system.css';
 
-/* Theme variables */
 import './theme/variables.css';
 
 setupIonicReact();
 
+const AppRoutes: React.FC = () => {
+  const { settings } = useSettings();
+
+  if (!settings.onboardingComplete) {
+    return (
+      <IonRouterOutlet>
+        <Route exact path="/onboarding">
+          <Onboarding />
+        </Route>
+        <Route exact path="/">
+          <Redirect to="/onboarding" />
+        </Route>
+        <Route>
+          <Redirect to="/onboarding" />
+        </Route>
+      </IonRouterOutlet>
+    );
+  }
+
+  if (!settings.isLoggedIn) {
+    const defaultRoute = getLoggedOutDefaultRoute(hasExplicitLogout());
+    return (
+      <IonRouterOutlet>
+        <Route exact path="/signed-out">
+          <SignedOut />
+        </Route>
+        <Route exact path="/welcome">
+          <WelcomeBack />
+        </Route>
+        <Route exact path="/">
+          <Redirect to={defaultRoute} />
+        </Route>
+        <Route>
+          <Redirect to={defaultRoute} />
+        </Route>
+      </IonRouterOutlet>
+    );
+  }
+
+  return (
+    <IonTabs>
+      <IonRouterOutlet>
+        <Route exact path="/today">
+          <Today />
+        </Route>
+        <Route exact path="/library">
+          <Library />
+        </Route>
+        <Route path="/favorites">
+          <Favorites />
+        </Route>
+        <Route exact path="/settings">
+          <Settings />
+        </Route>
+        <Route exact path="/privacy">
+          <Privacy />
+        </Route>
+        <Route exact path="/onboarding">
+          <Redirect to="/today" />
+        </Route>
+        <Route exact path="/">
+          <Redirect to="/today" />
+        </Route>
+      </IonRouterOutlet>
+      <IonTabBar slot="bottom">
+        <IonTabButton tab="today" href="/today">
+          <IonIcon aria-hidden="true" icon={sunny} />
+          <IonLabel>Today</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="library" href="/library">
+          <IonIcon aria-hidden="true" icon={library} />
+          <IonLabel>Library</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="favorites" href="/favorites">
+          <IonIcon aria-hidden="true" icon={heart} />
+          <IonLabel>Favorites</IonLabel>
+        </IonTabButton>
+        <IonTabButton tab="settings" href="/settings">
+          <IonIcon aria-hidden="true" icon={settingsOutline} />
+          <IonLabel>Settings</IonLabel>
+        </IonTabButton>
+      </IonTabBar>
+    </IonTabs>
+  );
+};
+
 const App: React.FC = () => (
   <IonApp>
-    <IonReactRouter>
-      <IonTabs>
-        <IonRouterOutlet>
-          <Route exact path="/tab1">
-            <Tab1 />
-          </Route>
-          <Route exact path="/tab2">
-            <Tab2 />
-          </Route>
-          <Route path="/tab3">
-            <Tab3 />
-          </Route>
-          <Route exact path="/">
-            <Redirect to="/tab1" />
-          </Route>
-        </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          <IonTabButton tab="tab1" href="/tab1">
-            <IonIcon aria-hidden="true" icon={triangle} />
-            <IonLabel>Tab 1</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab2" href="/tab2">
-            <IonIcon aria-hidden="true" icon={ellipse} />
-            <IonLabel>Tab 2</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab3" href="/tab3">
-            <IonIcon aria-hidden="true" icon={square} />
-            <IonLabel>Tab 3</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
-    </IonReactRouter>
+    <SettingsProvider>
+      <IonReactRouter>
+        <AppRoutes />
+      </IonReactRouter>
+    </SettingsProvider>
   </IonApp>
 );
 

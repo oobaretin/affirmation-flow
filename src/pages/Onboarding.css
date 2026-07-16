@@ -1,0 +1,81 @@
+.onboarding-content {
+  --padding-start: 1.5rem;
+  --padding-end: 1.5rem;
+}
+
+.onboarding-progress {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0 1rem;
+}
+
+.onboarding-progress .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ion-color-medium);
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
+}
+
+.onboarding-progress .dot.active {
+  opacity: 1;
+  background: var(--ion-color-primary);
+}
+
+.onboarding-step {
+  padding: 1rem 0 2rem;
+  text-align: center;
+}
+
+.onboarding-logo {
+  margin: 0 auto 1.25rem;
+}
+
+.onboarding-step h1 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--ion-text-color);
+}
+
+.onboarding-step p {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ion-color-medium);
+  margin: 0 0 1.5rem;
+}
+
+.onboarding-input {
+  margin-bottom: 1.5rem;
+  --border-radius: 12px;
+}
+
+.category-grid {
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.category-chip {
+  --padding-start: 0;
+  margin-bottom: 0.25rem;
+}
+
+.repeat-display h2 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 1rem 0;
+}
+
+.time-label {
+  font-size: 0.9rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.time-display {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+  margin-bottom: 1.5rem;
+}

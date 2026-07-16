@@ -1,0 +1,17 @@
+.voice-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.voice-settings ion-radio-group ion-item h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.voice-settings ion-radio-group ion-item p {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+}

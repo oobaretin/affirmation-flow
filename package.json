@@ -1,7 +1,7 @@
 {
   "name": "affirmation-flow",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,13 +9,17 @@
     "preview": "vite preview",
     "test.e2e": "cypress run",
     "test.unit": "vitest",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:ios": "npm run build && npx cap sync ios",
+    "open:ios": "npx cap open ios"
   },
   "dependencies": {
     "@capacitor/app": "7.0.1",
     "@capacitor/core": "7.2.0",
+    "@capacitor/ios": "7.2.0",
     "@capacitor/haptics": "7.0.1",
     "@capacitor/keyboard": "7.0.1",
+    "@capacitor/local-notifications": "7.0.1",
     "@capacitor/status-bar": "7.0.1",
     "@ionic/react": "^8.5.0",
     "@ionic/react-router": "^8.5.0",
@@ -50,5 +54,5 @@
     "vite": "~5.2.0",
     "vitest": "^0.34.6"
   },
-  "description": "An Ionic project"
+  "description": "AffirmEaze — daily affirmations with voice, favorites, and AI-assisted custom practice."
 }

@@ -1,0 +1,38 @@
+.app-logo {
+  border-radius: 24%;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow:
+    0 0 0 1px rgba(var(--ion-color-primary-rgb), 0.12),
+    0 10px 28px var(--brand-glow);
+}
+
+.app-logo img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.app-logo--sm {
+  width: 48px;
+  height: 48px;
+}
+
+.app-logo--xs {
+  width: 32px;
+  height: 32px;
+  border-radius: 22%;
+  box-shadow:
+    0 0 0 1px rgba(var(--ion-color-primary-rgb), 0.1),
+    0 4px 12px var(--brand-glow);
+}
+
+.app-logo--md {
+  width: 80px;
+  height: 80px;
+}
+
+.app-logo--lg {
+  width: 112px;
+  height: 112px;
+}

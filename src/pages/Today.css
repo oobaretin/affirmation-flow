@@ -1,0 +1,127 @@
+.today-content {
+  --background: var(--ion-background-color);
+}
+
+.today-header-logo {
+  margin-inline-start: 0.5rem;
+}
+
+.today-streak {
+  text-align: center;
+  padding: 0.5rem 1.5rem 0;
+}
+
+.today-streak p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.pinned-badge {
+  font-weight: 500;
+  color: var(--ion-color-medium);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.today-share-toast {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ion-color-primary);
+}
+
+.today-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+  color: var(--ion-color-medium);
+}
+
+.affirmation-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 55vh;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.affirmation-category {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ion-color-primary);
+  margin: 0 0 1.5rem;
+}
+
+.affirmation-text {
+  font-size: 1.5rem;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--ion-text-color);
+  margin: 0;
+  max-width: 22rem;
+}
+
+.repeat-hint {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+  margin: 0.5rem 0 0;
+}
+
+.today-actions-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  align-items: center;
+}
+
+.voice-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--ion-color-medium);
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.voice-btn.active {
+  color: var(--ion-color-primary);
+}
+
+.voice-btn:active {
+  transform: scale(1.15);
+}
+
+.favorite-btn {
+  margin-top: 0;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--ion-color-medium);
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.favorite-btn.saved {
+  color: var(--ion-color-danger);
+}
+
+.favorite-btn:active {
+  transform: scale(1.15);
+}
+
+.today-actions {
+  padding: 0 1.5rem 2rem;
+}
+
+.today-stop-section {
+  padding: 0 1.5rem 1rem;
+}

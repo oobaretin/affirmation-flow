@@ -1,0 +1,49 @@
+.repeat-selector {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.repeat-display h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+  margin: 0.5rem 0 1rem;
+}
+
+.repeat-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ion-color-medium);
+  margin: 0.75rem 0 0.5rem;
+}
+
+.mantra-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.mantra-chip {
+  border: 2px solid var(--ion-color-primary);
+  background: transparent;
+  color: var(--ion-color-primary);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mantra-chip.active {
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+}
+
+.repeat-range {
+  width: 100%;
+  margin-top: 0.5rem;
+}
