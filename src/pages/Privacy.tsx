@@ -59,6 +59,13 @@ const Privacy: React.FC = () => (
           notifications from a remote server.
         </p>
 
+        <h2>Subscriptions</h2>
+        <p>
+          {APP_NAME} requires an active premium subscription. Payments are processed by Apple
+          through In-App Purchase. We use RevenueCat to verify subscription status on your device.
+          We do not store your payment card details.
+        </p>
+
         <h2>Account &amp; cloud sync</h2>
         <p>
           {APP_NAME} does not require an account and does not offer cloud backup in v1. Locking

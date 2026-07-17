@@ -19,7 +19,9 @@ import Onboarding from './pages/Onboarding';
 import WelcomeBack from './pages/WelcomeBack';
 import SignedOut from './pages/SignedOut';
 import Privacy from './pages/Privacy';
+import Paywall from './pages/Paywall';
 import { useSettings, SettingsProvider } from './hooks/useSettings';
+import { SubscriptionProvider, useSubscription } from './hooks/useSubscription';
 import { getLoggedOutDefaultRoute, hasExplicitLogout } from './services/session';
 
 import '@ionic/react/css/core.css';
@@ -40,6 +42,7 @@ setupIonicReact();
 
 const AppRoutes: React.FC = () => {
   const { settings } = useSettings();
+  const { loading: subscriptionLoading, isSubscribed } = useSubscription();
 
   if (!settings.onboardingComplete) {
     return (
@@ -47,11 +50,37 @@ const AppRoutes: React.FC = () => {
         <Route exact path="/onboarding">
           <Onboarding />
         </Route>
+        <Route exact path="/privacy">
+          <Privacy />
+        </Route>
         <Route exact path="/">
           <Redirect to="/onboarding" />
         </Route>
         <Route>
           <Redirect to="/onboarding" />
+        </Route>
+      </IonRouterOutlet>
+    );
+  }
+
+  if (settings.onboardingComplete && subscriptionLoading) {
+    return null;
+  }
+
+  if (!isSubscribed) {
+    return (
+      <IonRouterOutlet>
+        <Route exact path="/paywall">
+          <Paywall />
+        </Route>
+        <Route exact path="/privacy">
+          <Privacy />
+        </Route>
+        <Route exact path="/">
+          <Redirect to="/paywall" />
+        </Route>
+        <Route>
+          <Redirect to="/paywall" />
         </Route>
       </IonRouterOutlet>
     );
@@ -127,9 +156,11 @@ const AppRoutes: React.FC = () => {
 const App: React.FC = () => (
   <IonApp>
     <SettingsProvider>
-      <IonReactRouter>
-        <AppRoutes />
-      </IonReactRouter>
+      <SubscriptionProvider>
+        <IonReactRouter>
+          <AppRoutes />
+        </IonReactRouter>
+      </SubscriptionProvider>
     </SettingsProvider>
   </IonApp>
 );

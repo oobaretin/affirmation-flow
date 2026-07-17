@@ -22,17 +22,20 @@ import VoiceSettings from '../components/VoiceSettings';
 import AppLogo from '../components/AppLogo';
 import { useCustomAffirmations } from '../hooks/useCustomAffirmations';
 import { useSettings } from '../hooks/useSettings';
+import { useSubscription } from '../hooks/useSubscription';
 import {
   requestNotificationPermission,
   scheduleDailyNotification,
 } from '../services/notifications';
 import { clearAllAppData, markExplicitLogout, pauseSession } from '../services/session';
+import { openManageSubscriptions } from '../services/subscription';
 import { APP_NAME, APP_VERSION, SUPPORT_EMAIL } from '../constants/app';
 import './Settings.css';
 
 const Settings: React.FC = () => {
   const history = useHistory();
   const { settings, updateSettings, resetOnboarding, logout } = useSettings();
+  const { status, purchasing, restore, isSubscribed } = useSubscription();
   const { custom } = useCustomAffirmations();
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   const [showClearAlert, setShowClearAlert] = useState(false);
@@ -89,6 +92,17 @@ const Settings: React.FC = () => {
     return `${h}:00 ${ampm}`;
   };
 
+  const formatRenewalDate = (value: string | null) => {
+    if (!value) return 'Active';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Active';
+    return date.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -108,6 +122,30 @@ const Settings: React.FC = () => {
           <div className="settings-brand-text">
             <h2>AffirmEaze</h2>
             <p>Daily affirmations, your way</p>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <IonText color="medium">
+            <h3>Subscription</h3>
+          </IonText>
+          <p className="settings-hint">
+            {isSubscribed
+              ? `Premium ${status.plan === 'yearly' ? 'Annual' : 'Monthly'} · Renews ${formatRenewalDate(status.expirationDate)}`
+              : 'Premium subscription required to use AffirmEaze.'}
+          </p>
+          <div className="settings-actions">
+            <IonButton expand="block" fill="outline" onClick={() => openManageSubscriptions()}>
+              Manage Subscription
+            </IonButton>
+            <IonButton
+              expand="block"
+              fill="clear"
+              disabled={purchasing}
+              onClick={() => void restore()}
+            >
+              Restore Purchases
+            </IonButton>
           </div>
         </div>
 

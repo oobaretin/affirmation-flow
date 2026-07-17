@@ -2,12 +2,14 @@
 
 Daily affirmations with voice practice, favorites, streaks, and a personal library — built for calm self-belief.
 
+**Premium subscription app** — users subscribe after onboarding to access the full app.
+
 ## Features
 
 - **Today** — focus-based daily affirmation, streak tracking, pin, share, voice
 - **Library** — browse by category, search, custom affirmations, AI generator
 - **Favorites** — speak, share, and send to Today
-- **Settings** — voice style, notifications, focus areas, local-only storage
+- **Settings** — voice style, notifications, focus areas, subscription management
 
 ## Development
 
@@ -19,9 +21,41 @@ npm run build:ios    # production build + Capacitor sync
 npm run open:ios     # open Xcode
 ```
 
+### Local simulator testing (no Apple account)
+
+Copy `.env.example` to `.env.local` and enable:
+
+```
+VITE_SUBSCRIPTION_DEV_BYPASS=true
+```
+
+See [docs/local-testing.md](docs/local-testing.md) for the full test flow.
+
 ### Optional AI generation
 
-Copy `.env.example` to `.env.local` and add `VITE_OPENAI_API_KEY` for live OpenAI generation. Without it, the AI Generator uses local templates.
+Add `VITE_OPENAI_API_KEY` to `.env.local` for live OpenAI generation. Without it, the AI Generator uses local templates.
+
+### Subscriptions (App Store)
+
+When your Apple Developer account is ready:
+
+```
+VITE_REVENUECAT_APPLE_API_KEY=appl_your_key_here
+```
+
+Remove `VITE_SUBSCRIPTION_DEV_BYPASS` for production builds. See [docs/app-store-checklist.md](docs/app-store-checklist.md).
+
+## Pre-ship docs (free tasks)
+
+| Doc | Purpose |
+|-----|---------|
+| [pre-ship-free-tasks.md](docs/pre-ship-free-tasks.md) | Master checklist while waiting for $99 account |
+| [local-testing.md](docs/local-testing.md) | Simulator build & test |
+| [app-store-metadata.md](docs/app-store-metadata.md) | Copy-paste App Store description & keywords |
+| [screenshots-guide.md](docs/screenshots-guide.md) | Capture App Store screenshots |
+| [host-privacy-policy.md](docs/host-privacy-policy.md) | Free privacy policy hosting |
+| [revenuecat-prep.md](docs/revenuecat-prep.md) | RevenueCat setup (free tier) |
+| [app-store-checklist.md](docs/app-store-checklist.md) | Full submission checklist |
 
 ## iOS build notes
 
@@ -29,20 +63,13 @@ Copy `.env.example` to `.env.local` and add `VITE_OPENAI_API_KEY` for live OpenA
 - If Xcode is in Downloads: `export DEVELOPER_DIR="$HOME/Downloads/Xcode.app/Contents/Developer"`
 - CocoaPods via user gem: `export PATH="$HOME/.gem/ruby/2.6.0/bin:$PATH"`
 
-## App Store metadata (draft)
+## App info
 
 | Field | Value |
 |-------|-------|
 | **App name** | AffirmEaze |
-| **Subtitle** | Daily affirmations, your way |
-| **Category** | Health & Fitness |
-| **Privacy policy URL** | Host `public/privacy.html` or use in-app Privacy Policy |
+| **Bundle ID** | com.affirmationflow.app |
 | **Support email** | support@affirmeaze.app |
-| **Description** | AffirmEaze helps you build a daily affirmation practice with soothing voice playback, personalized focus areas, favorites, streaks, and a growing library of custom affirmations. Everything stays on your device — no account required. |
-| **Keywords** | affirmation, mindfulness, self-love, mantra, daily motivation, gratitude, meditation |
-| **Age rating** | 4+ |
-| **Encryption** | Uses only standard HTTPS (ITSAppUsesNonExemptEncryption = false) |
-
-## Version
-
-Current release: **1.0.0**
+| **Privacy policy** | https://affirmeaze.netlify.app/privacy |
+| **Marketing / support URL** | https://affirmeaze.netlify.app |
+| **Version** | 1.0.0 |

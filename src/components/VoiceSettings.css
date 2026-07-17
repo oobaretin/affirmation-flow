@@ -4,6 +4,19 @@
   gap: 0.5rem;
 }
 
+.voice-recommended {
+  margin: 0 0 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(var(--ion-color-primary-rgb), 0.08);
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+}
+
+.voice-recommended strong {
+  color: var(--ion-color-primary);
+}
+
 .voice-settings ion-radio-group ion-item h3 {
   margin: 0;
   font-size: 1rem;
@@ -12,6 +25,12 @@
 
 .voice-settings ion-radio-group ion-item p {
   margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+}
+
+.voice-status {
+  margin: 0 0 0.5rem;
   font-size: 0.85rem;
   color: var(--ion-color-medium);
 }

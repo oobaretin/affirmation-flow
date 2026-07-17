@@ -1,0 +1,138 @@
+.paywall-content {
+  --background: linear-gradient(180deg, #f7f2ff 0%, #ffffff 45%);
+}
+
+.paywall-shell {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 2.5rem;
+  text-align: center;
+}
+
+.paywall-logo {
+  margin: 0 auto 1.25rem;
+}
+
+.paywall-shell h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.paywall-subtitle {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ion-color-medium);
+}
+
+.paywall-features {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  text-align: left;
+}
+
+.paywall-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.92rem;
+  color: var(--ion-text-color);
+}
+
+.paywall-features ion-icon {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--ion-color-primary);
+  font-size: 1.1rem;
+}
+
+.paywall-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0 1.5rem;
+  color: var(--ion-color-medium);
+}
+
+.paywall-plans {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.paywall-plan {
+  width: 100%;
+  padding: 1rem 1.1rem;
+  border: 2px solid rgba(var(--ion-color-primary-rgb), 0.15);
+  border-radius: 14px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.paywall-plan.selected {
+  border-color: var(--ion-color-primary);
+  box-shadow: 0 8px 24px rgba(var(--ion-color-primary-rgb), 0.12);
+}
+
+.paywall-plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.paywall-plan-header strong {
+  font-size: 1rem;
+}
+
+.paywall-badge {
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
+  color: var(--ion-color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.paywall-price {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.paywall-price span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ion-color-medium);
+}
+
+.paywall-note,
+.paywall-error,
+.paywall-legal {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ion-color-medium);
+}
+
+.paywall-error {
+  color: var(--ion-color-danger);
+}
+
+.paywall-primary-btn {
+  margin-top: 0.5rem;
+}
+
+.paywall-legal {
+  margin: 1.25rem 0 0;
+  text-align: left;
+}

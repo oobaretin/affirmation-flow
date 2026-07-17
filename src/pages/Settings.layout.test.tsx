@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import Settings from './Settings';
 import { SettingsProvider } from '../hooks/useSettings';
+import { SubscriptionProvider } from '../hooks/useSubscription';
 
 vi.mock('../services/notifications', () => ({
   scheduleDailyNotification: vi.fn(),
@@ -33,7 +34,9 @@ describe('Settings layout', () => {
   it('renders Log Out in the Account section', () => {
     render(
       <SettingsProvider>
-        <Settings />
+        <SubscriptionProvider>
+          <Settings />
+        </SubscriptionProvider>
       </SettingsProvider>,
     );
     expect(screen.getByText('Lock App')).toBeInTheDocument();

@@ -9,20 +9,93 @@ let activeUtterances = 0;
 let unlimitedLoop = false;
 let activeText: string | null = null;
 let cachedVoices: SpeechSynthesisVoice[] = [];
+let voicesReadyPromise: Promise<SpeechSynthesisVoice[]> | null = null;
+
+function readVoices(): SpeechSynthesisVoice[] {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return [];
+  return window.speechSynthesis.getVoices();
+}
+
+function primeVoiceDiscovery(): void {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+  // iOS often returns an empty/partial voice list until speech synthesis runs once.
+  const utterance = new SpeechSynthesisUtterance('');
+  utterance.volume = 0;
+  window.speechSynthesis.speak(utterance);
+  window.speechSynthesis.cancel();
+}
 
 function refreshVoices(): SpeechSynthesisVoice[] {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return [];
-
-  const voices = window.speechSynthesis.getVoices();
+  const voices = readVoices();
   if (voices.length > 0) cachedVoices = voices;
   return cachedVoices;
+}
+
+export function ensureVoicesLoaded(): Promise<SpeechSynthesisVoice[]> {
+  if (cachedVoices.length > 0) {
+    return Promise.resolve(cachedVoices);
+  }
+
+  if (voicesReadyPromise) return voicesReadyPromise;
+
+  voicesReadyPromise = new Promise((resolve) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      resolve([]);
+      voicesReadyPromise = null;
+      return;
+    }
+
+    const finish = () => {
+      const voices = refreshVoices();
+      if (voices.length > 0) {
+        voicesReadyPromise = null;
+        resolve(voices);
+        return true;
+      }
+      return false;
+    };
+
+    const onVoicesChanged = () => {
+      if (finish()) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+
+    window.speechSynthesis.onvoiceschanged = onVoicesChanged;
+    primeVoiceDiscovery();
+
+    if (finish()) {
+      window.speechSynthesis.onvoiceschanged = null;
+      return;
+    }
+
+    const delays = [100, 300, 600, 1200];
+    delays.forEach((delay) => {
+      window.setTimeout(() => {
+        if (finish()) {
+          window.speechSynthesis.onvoiceschanged = null;
+        }
+      }, delay);
+    });
+
+    window.setTimeout(() => {
+      window.speechSynthesis.onvoiceschanged = null;
+      voicesReadyPromise = null;
+      resolve(refreshVoices());
+    }, 1500);
+  });
+
+  return voicesReadyPromise;
 }
 
 if (typeof window !== 'undefined' && window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => {
     cachedVoices = window.speechSynthesis.getVoices();
   };
+  primeVoiceDiscovery();
   refreshVoices();
+  void ensureVoicesLoaded();
 }
 
 export function getAvailableVoices(): SpeechSynthesisVoice[] {
@@ -49,7 +122,7 @@ function applyVoiceOptions(utterance: SpeechSynthesisUtterance, options: VoiceOp
 
   utterance.rate = options.rate;
   utterance.pitch = options.pitch;
-  utterance.volume = 0.95;
+  utterance.volume = options.volume;
 }
 
 function createUtterance(text: string, options: VoiceOptions): SpeechSynthesisUtterance {

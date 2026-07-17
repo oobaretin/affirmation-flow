@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   IonButton,
   IonItem,
@@ -10,8 +10,15 @@ import {
   IonText,
 } from '@ionic/react';
 import type { VoiceStyle } from '../types/settings';
-import { getAvailableVoices, previewVoice } from '../services/voice';
-import { getVoiceOptions, VOICE_PRESETS } from '../services/voiceProfiles';
+import { ensureVoicesLoaded, getAvailableVoices, previewVoice } from '../services/voice';
+import {
+  dedupeVoicesByBaseName,
+  filterCalmClearVoices,
+  formatVoiceLabel,
+  getRecommendedVoice,
+  getVoiceOptions,
+  VOICE_PRESETS,
+} from '../services/voiceProfiles';
 import './VoiceSettings.css';
 
 type VoiceSettingsProps = {
@@ -21,7 +28,8 @@ type VoiceSettingsProps = {
   onVoiceURIChange: (voiceURI: string) => void;
 };
 
-const PREVIEW_TEXT = 'I am worthy of love, calm, and confidence.';
+const PREVIEW_TEXT =
+  'I am worthy of love, calm, and confidence. I release what no longer serves me.';
 
 const VoiceSettings: React.FC<VoiceSettingsProps> = ({
   voiceStyle,
@@ -30,13 +38,22 @@ const VoiceSettings: React.FC<VoiceSettingsProps> = ({
   onVoiceURIChange,
 }) => {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [loadingVoices, setLoadingVoices] = useState(true);
+
+  const loadVoices = useCallback(async () => {
+    setLoadingVoices(true);
+    const loaded = await ensureVoicesLoaded();
+    setVoices(loaded.length > 0 ? loaded : getAvailableVoices());
+    setLoadingVoices(false);
+  }, []);
 
   useEffect(() => {
-    const load = () => setVoices(getAvailableVoices());
-    load();
+    void loadVoices();
 
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = load;
+      window.speechSynthesis.onvoiceschanged = () => {
+        void loadVoices();
+      };
     }
 
     return () => {
@@ -44,10 +61,15 @@ const VoiceSettings: React.FC<VoiceSettingsProps> = ({
         window.speechSynthesis.onvoiceschanged = null;
       }
     };
-  }, []);
+  }, [loadVoices]);
 
-  const englishVoices = useMemo(
-    () => voices.filter((voice) => voice.lang.toLowerCase().startsWith('en')),
+  const calmVoices = useMemo(
+    () => dedupeVoicesByBaseName(filterCalmClearVoices(voices, voiceURI)),
+    [voices, voiceURI],
+  );
+
+  const recommendedVoice = useMemo(
+    () => getRecommendedVoice(voices),
     [voices],
   );
 
@@ -59,9 +81,19 @@ const VoiceSettings: React.FC<VoiceSettingsProps> = ({
     <div className="voice-settings">
       <IonText color="medium">
         <p className="settings-hint">
-          Uses your device&apos;s built-in voices. For a soft, warm tone, try Soothing with Samantha on iPhone.
+          Keep <strong>Soothing</strong> + <strong>Auto</strong> for the softest tone.
         </p>
       </IonText>
+
+      {loadingVoices && (
+        <p className="voice-status">Loading voices...</p>
+      )}
+
+      {!loadingVoices && recommendedVoice && !voiceURI && (
+        <p className="voice-recommended">
+          Auto will use: <strong>{formatVoiceLabel(recommendedVoice)}</strong>
+        </p>
+      )}
 
       <IonRadioGroup
         value={voiceStyle}
@@ -79,7 +111,7 @@ const VoiceSettings: React.FC<VoiceSettingsProps> = ({
         ))}
       </IonRadioGroup>
 
-      {englishVoices.length > 0 && (
+      {calmVoices.length > 0 && (
         <IonItem lines="none">
           <IonSelect
             label="Voice"
@@ -87,14 +119,22 @@ const VoiceSettings: React.FC<VoiceSettingsProps> = ({
             value={voiceURI || 'auto'}
             onIonChange={(e) => onVoiceURIChange(e.detail.value === 'auto' ? '' : e.detail.value)}
           >
-            <IonSelectOption value="auto">Auto (best soothing voice)</IonSelectOption>
-            {englishVoices.map((voice) => (
-              <IonSelectOption key={voice.voiceURI} value={voice.voiceURI}>
-                {voice.name} ({voice.lang})
-              </IonSelectOption>
-            ))}
+            <IonSelectOption value="auto">Auto (best calm voice)</IonSelectOption>
+            {calmVoices.map((voice) => {
+              const isRecommended = voice.voiceURI === recommendedVoice?.voiceURI;
+              const label = formatVoiceLabel(voice);
+              return (
+                <IonSelectOption key={voice.voiceURI} value={voice.voiceURI}>
+                  {isRecommended ? `★ ${label}` : label}
+                </IonSelectOption>
+              );
+            })}
           </IonSelect>
         </IonItem>
+      )}
+
+      {!loadingVoices && calmVoices.length === 0 && (
+        <p className="voice-status">No calm voices found on this device.</p>
       )}
 
       <IonButton expand="block" fill="outline" onClick={handlePreview}>
