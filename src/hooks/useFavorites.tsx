@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { Affirmation } from '../data/affirmations';
 
 const STORAGE_KEY = 'affirmation-flow-favorites';
@@ -12,7 +19,17 @@ function loadFavorites(): Affirmation[] {
   }
 }
 
-export function useFavorites() {
+interface FavoritesContextValue {
+  favorites: Affirmation[];
+  isFavorite: (id: string) => boolean;
+  toggleFavorite: (affirmation: Affirmation) => void;
+  removeFavorite: (id: string) => void;
+  clearFavorites: () => void;
+}
+
+const FavoritesContext = createContext<FavoritesContextValue | null>(null);
+
+export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<Affirmation[]>(loadFavorites);
 
   useEffect(() => {
@@ -42,5 +59,19 @@ export function useFavorites() {
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
-  return { favorites, isFavorite, toggleFavorite, removeFavorite, clearFavorites };
+  return (
+    <FavoritesContext.Provider
+      value={{ favorites, isFavorite, toggleFavorite, removeFavorite, clearFavorites }}
+    >
+      {children}
+    </FavoritesContext.Provider>
+  );
+}
+
+export function useFavorites() {
+  const context = useContext(FavoritesContext);
+  if (!context) {
+    throw new Error('useFavorites must be used within FavoritesProvider');
+  }
+  return context;
 }

@@ -21,6 +21,8 @@ import SignedOut from './pages/SignedOut';
 import Privacy from './pages/Privacy';
 import Paywall from './pages/Paywall';
 import { useSettings, SettingsProvider } from './hooks/useSettings';
+import { CustomAffirmationsProvider } from './hooks/useCustomAffirmations';
+import { FavoritesProvider } from './hooks/useFavorites';
 import { SubscriptionProvider, useSubscription } from './hooks/useSubscription';
 import { getLoggedOutDefaultRoute, hasExplicitLogout } from './services/session';
 
@@ -156,11 +158,15 @@ const AppRoutes: React.FC = () => {
 const App: React.FC = () => (
   <IonApp>
     <SettingsProvider>
-      <SubscriptionProvider>
-        <IonReactRouter>
-          <AppRoutes />
-        </IonReactRouter>
-      </SubscriptionProvider>
+      <CustomAffirmationsProvider>
+        <FavoritesProvider>
+          <SubscriptionProvider>
+            <IonReactRouter>
+              <AppRoutes />
+            </IonReactRouter>
+          </SubscriptionProvider>
+        </FavoritesProvider>
+      </CustomAffirmationsProvider>
     </SettingsProvider>
   </IonApp>
 );

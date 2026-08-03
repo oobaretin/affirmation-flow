@@ -11,6 +11,10 @@ function loadSettings(): UserSettings {
     const parsed = JSON.parse(stored) as Partial<UserSettings>;
     const merged = { ...DEFAULT_SETTINGS, ...parsed };
 
+    if (merged.voiceProvider === 'device') {
+      merged.voiceProvider = 'elevenlabs';
+    }
+
     if (merged.onboardingComplete && parsed.isLoggedIn === undefined) {
       merged.isLoggedIn = true;
     }

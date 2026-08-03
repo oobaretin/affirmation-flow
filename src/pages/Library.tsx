@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import {
   IonAccordion,
@@ -19,7 +19,8 @@ import {
   IonToolbar,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { add, heart, heartOutline, pin, sparkles, stopCircle, trash, volumeHigh } from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
+import { add, heart, heartOutline, pin, sparkles, stopCircle, sunny, trash, volumeHigh } from 'ionicons/icons';
 import {
   AFFIRMATIONS,
   CATEGORIES,
@@ -30,9 +31,10 @@ import AiGenerator from '../components/AiGenerator';
 import { useCustomAffirmations } from '../hooks/useCustomAffirmations';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSettings } from '../hooks/useSettings';
-import { getVoiceOptions } from '../services/voiceProfiles';
+import { buildVoiceOptions } from '../services/voiceProfiles';
 import { getActiveSpeechText, isSpeaking, speakAffirmation, stopSpeaking } from '../services/voice';
 import { pinAffirmationForToday, isPinnedToday } from '../services/todayAffirmation';
+import { queueTodayAffirmation } from '../services/todaySelection';
 import './Library.css';
 
 const CATEGORY_ICONS: Record<Category, string> = {
@@ -44,25 +46,37 @@ const CATEGORY_ICONS: Record<Category, string> = {
   Health: '🌿',
 };
 
+function defaultAiCategories(focusCategories: string[]): Category[] {
+  const fromFocus = focusCategories.filter((category): category is Category =>
+    CATEGORIES.includes(category as Category),
+  );
+  return fromFocus.length > 0 ? fromFocus : ['Self-Love'];
+}
+
+function formatSavedCategories(categories: string[]): string {
+  const unique = [...new Set(categories)];
+  if (unique.length === 0) return 'Library';
+  if (unique.length === 1) return unique[0];
+  if (unique.length === 2) return `${unique[0]} and ${unique[1]}`;
+  return `${unique.length} categories`;
+}
+
 const Library: React.FC = () => {
+  const history = useHistory();
   const { settings } = useSettings();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { custom, addCustom, addMany, removeCustom } = useCustomAffirmations();
   const [expanded, setExpanded] = useState<string | undefined>();
   const [newText, setNewText] = useState('');
   const [newCategory, setNewCategory] = useState<string>('Custom');
+  const [aiCategories, setAiCategories] = useState<Category[]>(() =>
+    defaultAiCategories(settings.focusCategories),
+  );
   const [showForm, setShowForm] = useState(false);
   const [showAi, setShowAi] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [saveToast, setSaveToast] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const myAffirmationsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (settings.focusCategories.length > 0) {
-      setExpanded(settings.focusCategories[0]);
-    }
-  }, [settings.focusCategories]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -75,7 +89,7 @@ const Library: React.FC = () => {
   };
 
   const filteredCustom = useMemo(
-    () => custom.filter(matchesSearch),
+    () => custom.filter((item) => item.category === 'Custom').filter(matchesSearch),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [custom, normalizedQuery],
   );
@@ -83,12 +97,14 @@ const Library: React.FC = () => {
   const filteredByCategory = useMemo(() => {
     const result: Partial<Record<Category, Affirmation[]>> = {};
     CATEGORIES.forEach((category) => {
-      const items = AFFIRMATIONS.filter((item) => item.category === category).filter(matchesSearch);
+      const builtIn = AFFIRMATIONS.filter((item) => item.category === category);
+      const customInCategory = custom.filter((item) => item.category === category);
+      const items = [...builtIn, ...customInCategory].filter(matchesSearch);
       if (items.length > 0) result[category] = items;
     });
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [normalizedQuery]);
+  }, [custom, normalizedQuery]);
 
   const hasSearchResults =
     !normalizedQuery
@@ -158,7 +174,7 @@ const Library: React.FC = () => {
       settings.repeatCount,
       () => setSpeakingId(null),
       unlimited,
-      getVoiceOptions(settings.voiceStyle, settings.voiceURI),
+      buildVoiceOptions(settings),
     );
     if (!isSpeaking()) setSpeakingId(null);
   };
@@ -172,16 +188,32 @@ const Library: React.FC = () => {
     const saved = addMany(affirmations);
 
     if (saved.length > 0) {
-      setExpanded('Custom');
-      setSaveToast(`${saved.length} saved to My Affirmations`);
-      setTimeout(() => {
-        if (myAffirmationsRef.current && typeof myAffirmationsRef.current.scrollIntoView === 'function') {
-          myAffirmationsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 150);
+      const savedCategories = [...new Set(saved.map((item) => item.category))];
+      const primaryCategory = savedCategories.find((category) =>
+        CATEGORIES.includes(category as Category),
+      );
+
+      if (primaryCategory && CATEGORIES.includes(primaryCategory as Category)) {
+        setExpanded(primaryCategory);
+      } else if (savedCategories.includes('Custom')) {
+        setExpanded('Custom');
+      }
+
+      setSaveToast(`${saved.length} saved to ${formatSavedCategories(savedCategories)}`);
+      setTimeout(() => setSaveToast(''), 2500);
     }
 
     return saved.length;
+  };
+
+  const openAiForCategory = (category: Category) => {
+    setAiCategories((prev) => (prev.includes(category) ? prev : [...prev, category]));
+    setShowAi(true);
+    setExpanded(category);
+  };
+
+  const handleAccordionChange = (value: string | undefined) => {
+    setExpanded(value);
   };
 
   const handlePin = async (affirmation: Affirmation) => {
@@ -195,6 +227,11 @@ const Library: React.FC = () => {
     }
   };
 
+  const handleUseToday = (affirmation: Affirmation) => {
+    queueTodayAffirmation(affirmation, true);
+    history.push('/today', { affirmation });
+  };
+
   const renderAffirmation = (affirmation: Affirmation, onDelete?: () => void) => {
     const saved = isFavorite(affirmation.id);
     const isActive = speakingId === affirmation.id;
@@ -205,6 +242,13 @@ const Library: React.FC = () => {
           <p>{affirmation.text}</p>
           {pinned && <p className="library-pinned-label">Pinned for today</p>}
         </IonLabel>
+        <button
+          className="use-today-btn-sm"
+          onClick={() => handleUseToday(affirmation)}
+          aria-label="Use on Today"
+        >
+          <IonIcon icon={sunny} />
+        </button>
         <button
           className={`pin-btn-sm ${pinned ? 'active' : ''}`}
           onClick={() => handlePin(affirmation)}
@@ -275,7 +319,7 @@ const Library: React.FC = () => {
               onClick={() => setShowAi(!showAi)}
             >
               <IonIcon slot="start" icon={sparkles} />
-              AI Generator
+              Create Affirmations
             </IonButton>
           </div>
 
@@ -323,7 +367,11 @@ const Library: React.FC = () => {
           )}
 
           {showAi && (
-            <AiGenerator onSave={handleAiSave} />
+            <AiGenerator
+              categories={aiCategories}
+              onCategoriesChange={setAiCategories}
+              onSave={handleAiSave}
+            />
           )}
 
           {saveToast && (
@@ -331,7 +379,6 @@ const Library: React.FC = () => {
           )}
         </div>
 
-        <div ref={myAffirmationsRef}>
         {normalizedQuery && !hasSearchResults ? (
           <div className="library-empty-search">
             <p>No affirmations match &ldquo;{searchQuery.trim()}&rdquo;</p>
@@ -339,7 +386,7 @@ const Library: React.FC = () => {
         ) : (
         <IonAccordionGroup
           value={expanded}
-          onIonChange={(e) => setExpanded(e.detail.value as string | undefined)}
+          onIonChange={(e) => handleAccordionChange(e.detail.value as string | undefined)}
         >
           {custom.length > 0 && filteredCustom.length > 0 && (
             <IonAccordion value="Custom">
@@ -361,6 +408,7 @@ const Library: React.FC = () => {
           {CATEGORIES.map((category) => {
             const items = filteredByCategory[category];
             if (!items || items.length === 0) return null;
+            const customCount = items.filter((item) => item.id.startsWith('custom-')).length;
             return (
               <IonAccordion key={category} value={category}>
                 <IonItem slot="header" color="light">
@@ -369,18 +417,37 @@ const Library: React.FC = () => {
                   </span>
                   <IonLabel>
                     <h2>{category}</h2>
-                    <p>{items.length} affirmations</p>
+                    <p>
+                      {items.length} affirmation{items.length === 1 ? '' : 's'}
+                      {customCount > 0 ? ` · ${customCount} added by you` : ''}
+                    </p>
                   </IonLabel>
                 </IonItem>
                 <IonList slot="content">
-                  {items.map((affirmation) => renderAffirmation(affirmation))}
+                  <div className="category-generate-row">
+                    <IonButton
+                      fill="clear"
+                      size="small"
+                      onClick={() => openAiForCategory(category)}
+                    >
+                      <IonIcon slot="start" icon={sparkles} />
+                      Generate for {category}
+                    </IonButton>
+                  </div>
+                  {items.map((affirmation) =>
+                    renderAffirmation(
+                      affirmation,
+                      affirmation.id.startsWith('custom-')
+                        ? () => removeCustom(affirmation.id)
+                        : undefined,
+                    ),
+                  )}
                 </IonList>
               </IonAccordion>
             );
           })}
         </IonAccordionGroup>
         )}
-        </div>
       </IonContent>
     </IonPage>
   );

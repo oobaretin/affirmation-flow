@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  buildVoiceOptions,
   dedupeVoicesByBaseName,
   filterCalmClearVoices,
+  filterDeviceVoicesForPicker,
   getRecommendedVoice,
   getVoiceOptions,
   getVoiceBaseName,
@@ -22,23 +24,24 @@ function mockVoice(name: string, lang = 'en-US', localService = true): SpeechSyn
 }
 
 describe('voiceProfiles', () => {
-  it('prefers soothing english voices like Samantha', () => {
+  it('uses Karen as the free device voice', () => {
     const voices = [
       mockVoice('Alex'),
       mockVoice('Samantha'),
+      mockVoice('Karen'),
       mockVoice('Fred'),
     ];
 
-    expect(pickSoothingVoice(voices)?.name).toBe('Samantha');
+    expect(pickSoothingVoice(voices)?.name).toBe('Karen');
   });
 
-  it('prefers en-US over other english voices', () => {
+  it('prefers Karen (Enhanced) over plain Karen', () => {
     const voices = [
-      mockVoice('Serena', 'en-GB'),
-      mockVoice('Karen', 'en-US'),
+      mockVoice('Karen'),
+      mockVoice('Karen (Enhanced)'),
     ];
 
-    expect(pickSoothingVoice(voices)?.name).toBe('Karen');
+    expect(pickSoothingVoice(voices)?.name).toBe('Karen (Enhanced)');
   });
 
   it('uses softer defaults for soothing preset', () => {
@@ -49,58 +52,84 @@ describe('voiceProfiles', () => {
     expect(options.volume).toBeLessThan(1);
   });
 
-  it('scores enhanced female voices higher', () => {
-    const soothing = scoreVoiceForSoothing(mockVoice('Samantha (Enhanced)'));
-    const generic = scoreVoiceForSoothing(mockVoice('Alex'));
-    expect(soothing).toBeGreaterThan(generic);
+  it('scores enhanced Karen higher than plain Karen', () => {
+    const enhanced = scoreVoiceForSoothing(mockVoice('Karen (Enhanced)'));
+    const plain = scoreVoiceForSoothing(mockVoice('Karen'));
+    expect(enhanced).toBeGreaterThan(plain);
   });
 
-  it('returns recommended voice from device list', () => {
-    const voices = [mockVoice('Alex'), mockVoice('Samantha')];
-    expect(getRecommendedVoice(voices)?.name).toBe('Samantha');
+  it('returns Karen as recommended free device voice', () => {
+    const voices = [mockVoice('Alex'), mockVoice('Karen'), mockVoice('Samantha')];
+    expect(getRecommendedVoice(voices)?.name).toBe('Karen');
   });
 
-  it('filters to calm clear voices only', () => {
+  it('allows only Karen in the free voice allowlist', () => {
     const voices = [
       mockVoice('Alex'),
       mockVoice('Samantha'),
       mockVoice('Karen'),
+      mockVoice('Moira', 'en-IE'),
       mockVoice('Zarvox'),
       mockVoice('Marie', 'fr-FR'),
     ];
 
     const calm = filterCalmClearVoices(voices);
-    expect(calm.map((voice) => voice.name)).toEqual(['Samantha', 'Karen']);
+    expect(calm.map((voice) => voice.name)).toEqual(['Karen']);
     expect(isCalmClearVoice(mockVoice('Alex'))).toBe(false);
-    expect(isCalmClearVoice(mockVoice('Samantha'))).toBe(true);
+    expect(isCalmClearVoice(mockVoice('Samantha'))).toBe(false);
+    expect(isCalmClearVoice(mockVoice('Moira'))).toBe(false);
+    expect(isCalmClearVoice(mockVoice('Karen'))).toBe(true);
   });
 
-  it('dedupes duplicate voice names like multiple Karen variants', () => {
+  it('dedupes duplicate Karen variants', () => {
     const voices = [
       mockVoice('Karen'),
       mockVoice('Karen (Enhanced)'),
-      mockVoice('Samantha (Premium)'),
       mockVoice('Samantha'),
     ];
 
-    const calm = dedupeVoicesByBaseName(filterCalmClearVoices(voices));
-    expect(calm.map((voice) => getVoiceBaseName(voice.name))).toEqual(['samantha', 'karen']);
-    expect(calm[0].name).toBe('Samantha (Premium)');
-    expect(calm[1].name).toBe('Karen (Enhanced)');
-  });
-
-  it('includes iOS compact voices like Samantha (Compact)', () => {
-    const voices = [
-      mockVoice('Karen'),
-      mockVoice('Samantha (Compact)'),
-      mockVoice('Nicky (Compact)'),
-    ];
+    const deduped = dedupeVoicesByBaseName(voices.filter(isCalmClearVoice));
+    expect(deduped).toHaveLength(1);
+    expect(deduped[0].name).toBe('Karen (Enhanced)');
 
     const calm = filterCalmClearVoices(voices);
-    expect(calm.map((voice) => getVoiceBaseName(voice.name))).toEqual([
-      'samantha',
-      'karen',
-      'nicky',
-    ]);
+    expect(calm.map((voice) => getVoiceBaseName(voice.name))).toEqual(['karen']);
+  });
+
+  it('shows only Karen in the device voice picker', () => {
+    const voices = [
+      mockVoice('Samantha'),
+      mockVoice('Fiona', 'en-GB'),
+      mockVoice('Moira', 'en-IE'),
+      mockVoice('Karen'),
+      mockVoice('Zarvox'),
+    ];
+
+    const picker = filterDeviceVoicesForPicker(voices);
+    expect(picker.map((voice) => getVoiceBaseName(voice.name))).toEqual(['karen']);
+  });
+
+  it('excludes funny and non-allowlisted voices from picker', () => {
+    const voices = [
+      mockVoice('Karen'),
+      mockVoice('Boing'),
+      mockVoice('Serena', 'en-GB'),
+    ];
+
+    const picker = filterDeviceVoicesForPicker(voices);
+    expect(picker.map((voice) => getVoiceBaseName(voice.name))).toEqual(['karen']);
+  });
+
+  it('enables ElevenLabs in voice options when configured', () => {
+    vi.stubEnv('VITE_ELEVENLABS_API_KEY', 'test-key');
+    const options = buildVoiceOptions({
+      voiceStyle: 'soothing',
+      voiceURI: '',
+      voiceProvider: 'elevenlabs',
+      elevenLabsVoiceId: 'voice-123',
+    });
+    expect(options.useElevenLabs).toBe(true);
+    expect(options.elevenLabsVoiceId).toBe('voice-123');
+    vi.unstubAllEnvs();
   });
 });

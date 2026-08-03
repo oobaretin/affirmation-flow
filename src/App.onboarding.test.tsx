@@ -29,7 +29,9 @@ describe('App onboarding flow', () => {
     const nameInput = await screen.findByLabelText(/your name/i);
     await user.type(nameInput, 'TestUser');
 
-    await user.click(screen.getByText('Continue'));
+    const focusCheckbox = document.querySelector('ion-checkbox');
+    expect(focusCheckbox).toBeTruthy();
+    await user.click(focusCheckbox!);
     await user.click(screen.getByText('Continue'));
     await user.click(screen.getByText('Continue'));
 

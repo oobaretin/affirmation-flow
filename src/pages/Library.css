@@ -32,6 +32,14 @@
   flex-shrink: 0;
 }
 
+.category-generate-row {
+  padding: 0.5rem 1rem 0.25rem;
+}
+
+.category-generate-row ion-button {
+  margin: 0;
+}
+
 .custom-section {
   padding: 1rem 1rem 0;
 }
@@ -73,6 +81,20 @@
 
 .speak-btn-sm.active {
   color: var(--ion-color-danger);
+}
+
+.use-today-btn-sm {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--ion-color-medium);
+  cursor: pointer;
+  padding: 0.5rem;
+  flex-shrink: 0;
+}
+
+.use-today-btn-sm:active {
+  color: var(--ion-color-warning);
 }
 
 .pin-btn-sm {

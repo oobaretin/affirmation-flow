@@ -1,8 +1,12 @@
 import type { Category } from '../data/affirmations';
 
+export interface GeneratedAffirmation {
+  text: string;
+  category: string;
+}
+
 export interface GenerateOptions {
   categories: string[];
-  intention?: string;
   count?: number;
 }
 
@@ -80,42 +84,49 @@ function applyIntention(text: string, intention: string): string {
   return text.replace(/\{intention\}/g, intention);
 }
 
-function generateLocal(options: GenerateOptions): string[] {
+function normalizeCategoryPool(categories: string[]): Category[] {
+  const pool = categories.filter((category): category is Category =>
+    Object.prototype.hasOwnProperty.call(CATEGORY_TEMPLATES, category),
+  );
+  return pool.length > 0 ? pool : ['Self-Love'];
+}
+
+function generateLocal(options: GenerateOptions): GeneratedAffirmation[] {
   const count = Math.min(Math.max(options.count ?? 3, 1), 10);
-  const intention = options.intention?.trim() || 'my highest good';
-  const pool = options.categories.length > 0 ? options.categories : ['Self-Love'];
-  const results: string[] = [];
+  const pool = normalizeCategoryPool(options.categories);
+  const results: GeneratedAffirmation[] = [];
   const used = new Set<string>();
 
   let attempts = 0;
   while (results.length < count && attempts < count * 20) {
     attempts += 1;
-    const category = pickRandom(pool) as Category;
-    const templates = CATEGORY_TEMPLATES[category] ?? CATEGORY_TEMPLATES['Self-Love'];
+    const category = pickRandom(pool);
+    const templates = CATEGORY_TEMPLATES[category];
     const template = pickRandom(templates);
-    const categoryIntention = options.intention?.trim() || DEFAULT_INTENTIONS[category];
-    const text = applyIntention(template, categoryIntention);
+    const text = applyIntention(template, DEFAULT_INTENTIONS[category]);
 
     if (!used.has(text)) {
       used.add(text);
-      results.push(text);
+      results.push({ text, category });
     }
   }
 
   return results;
 }
 
-async function generateWithOpenAI(options: GenerateOptions): Promise<string[] | null> {
+type OpenAiAffirmation = string | { text?: string; category?: string };
+
+async function generateWithOpenAI(options: GenerateOptions): Promise<GeneratedAffirmation[] | null> {
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY as string | undefined;
   if (!apiKey) return null;
 
   const count = options.count ?? 3;
   const categories = options.categories.join(', ') || 'general wellness';
-  const intention = options.intention?.trim() || 'personal growth';
   const prompt = `Generate ${count} unique, uplifting first-person affirmations.
 Categories: ${categories}
-Intention: ${intention}
-Do not include the user's name. Return only a JSON array of strings, no markdown.`;
+Assign each affirmation to one of these categories.
+Do not include the user's name.
+Return only a JSON array. Each item may be a string or an object with "text" and "category". No markdown.`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -140,20 +151,37 @@ Do not include the user's name. Return only a JSON array of strings, no markdown
     const content = data.choices?.[0]?.message?.content?.trim();
     if (!content) return null;
 
-    const parsed = JSON.parse(content) as string[];
+    const parsed = JSON.parse(content) as OpenAiAffirmation[];
     if (!Array.isArray(parsed)) return null;
 
-    return parsed
-      .filter((item) => typeof item === 'string' && item.trim())
-      .map((item) => item.trim())
-      .slice(0, count);
+    const pool = normalizeCategoryPool(options.categories);
+    const mapped: GeneratedAffirmation[] = [];
+
+    parsed.forEach((item, index) => {
+      if (typeof item === 'string' && item.trim()) {
+        mapped.push({
+          text: item.trim(),
+          category: pool[index % pool.length],
+        });
+        return;
+      }
+
+      if (typeof item === 'object' && item?.text?.trim()) {
+        const category = pool.includes(item.category as Category)
+          ? (item.category as string)
+          : pool[index % pool.length];
+        mapped.push({ text: item.text.trim(), category });
+      }
+    });
+
+    return mapped.slice(0, count);
   } catch {
     return null;
   }
 }
 
 export async function generateAffirmations(options: GenerateOptions): Promise<{
-  affirmations: string[];
+  affirmations: GeneratedAffirmation[];
   source: 'ai' | 'local';
 }> {
   const aiResults = await generateWithOpenAI(options);

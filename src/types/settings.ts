@@ -1,5 +1,8 @@
+import { DEFAULT_ELEVENLABS_VOICE_ID } from '../constants/elevenLabsVoices';
+
 export type RepeatMode = 'fixed' | 'unlimited';
 export type VoiceStyle = 'soothing' | 'balanced' | 'bright';
+export type VoiceProvider = 'device' | 'elevenlabs';
 
 export interface UserSettings {
   name: string;
@@ -10,6 +13,8 @@ export interface UserSettings {
   voiceEnabled: boolean;
   voiceStyle: VoiceStyle;
   voiceURI: string;
+  voiceProvider: VoiceProvider;
+  elevenLabsVoiceId: string;
   notificationsEnabled: boolean;
   notificationHour: number;
   notificationMinute: number;
@@ -27,6 +32,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   voiceEnabled: true,
   voiceStyle: 'soothing',
   voiceURI: '',
+  voiceProvider: 'elevenlabs',
+  elevenLabsVoiceId: DEFAULT_ELEVENLABS_VOICE_ID,
   notificationsEnabled: true,
   notificationHour: 8,
   notificationMinute: 0,

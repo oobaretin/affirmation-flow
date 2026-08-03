@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import type { Affirmation } from '../data/affirmations';
 
 const STORAGE_KEY = 'affirmation-flow-custom';
@@ -12,7 +19,17 @@ function loadCustom(): Affirmation[] {
   }
 }
 
-export function useCustomAffirmations() {
+interface CustomAffirmationsContextValue {
+  custom: Affirmation[];
+  addCustom: (text: string, category?: string) => Affirmation;
+  addMany: (items: { text: string; category?: string }[]) => Affirmation[];
+  removeCustom: (id: string) => void;
+  clearCustom: () => void;
+}
+
+const CustomAffirmationsContext = createContext<CustomAffirmationsContextValue | null>(null);
+
+export function CustomAffirmationsProvider({ children }: { children: ReactNode }) {
   const [custom, setCustom] = useState<Affirmation[]>(loadCustom);
 
   useEffect(() => {
@@ -54,5 +71,19 @@ export function useCustomAffirmations() {
     setCustom((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
-  return { custom, addCustom, addMany, removeCustom, clearCustom };
+  return (
+    <CustomAffirmationsContext.Provider
+      value={{ custom, addCustom, addMany, removeCustom, clearCustom }}
+    >
+      {children}
+    </CustomAffirmationsContext.Provider>
+  );
+}
+
+export function useCustomAffirmations() {
+  const context = useContext(CustomAffirmationsContext);
+  if (!context) {
+    throw new Error('useCustomAffirmations must be used within CustomAffirmationsProvider');
+  }
+  return context;
 }

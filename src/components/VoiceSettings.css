@@ -4,6 +4,13 @@
   gap: 0.5rem;
 }
 
+.voice-settings-intro {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ion-color-medium);
+}
+
 .voice-recommended {
   margin: 0 0 0.5rem;
   padding: 0.65rem 0.85rem;
@@ -33,4 +40,12 @@
   margin: 0 0 0.5rem;
   font-size: 0.85rem;
   color: var(--ion-color-medium);
+}
+
+.voice-status-warning {
+  color: var(--ion-color-warning-shade, #9a6b00);
+}
+
+.voice-status-warning code {
+  font-size: 0.8rem;
 }

@@ -36,6 +36,11 @@
   margin-bottom: 0.5rem;
 }
 
+.settings-focus-section {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
 .settings-section {
   padding: 1rem 1.5rem;
 }

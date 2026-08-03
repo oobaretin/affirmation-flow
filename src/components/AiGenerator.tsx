@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   IonButton,
   IonCheckbox,
@@ -6,25 +6,34 @@ import {
   IonIcon,
   IonLabel,
   IonSpinner,
-  IonTextarea,
 } from '@ionic/react';
 import { checkmark, refresh, sparkles } from 'ionicons/icons';
-import { CATEGORIES } from '../data/affirmations';
-import { generateAffirmations } from '../services/aiAffirmations';
-import { useSettings } from '../hooks/useSettings';
+import { CATEGORIES, type Category } from '../data/affirmations';
+import {
+  generateAffirmations,
+  type GeneratedAffirmation,
+} from '../services/aiAffirmations';
 import './AiGenerator.css';
 
 interface AiGeneratorProps {
+  categories: Category[];
+  onCategoriesChange: (categories: Category[]) => void;
   onSave: (affirmations: { text: string; category: string }[]) => number;
 }
 
-const AiGenerator: React.FC<AiGeneratorProps> = ({ onSave }) => {
-  const { settings } = useSettings();
-  const [intention, setIntention] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    settings.focusCategories.length > 0 ? settings.focusCategories : ['Self-Love'],
-  );
-  const [generated, setGenerated] = useState<string[]>([]);
+function formatCategoryList(categories: Category[]): string {
+  if (categories.length === 0) return 'your categories';
+  if (categories.length === 1) return categories[0];
+  if (categories.length === 2) return `${categories[0]} and ${categories[1]}`;
+  return `${categories.length} categories`;
+}
+
+const AiGenerator: React.FC<AiGeneratorProps> = ({
+  categories,
+  onCategoriesChange,
+  onSave,
+}) => {
+  const [generated, setGenerated] = useState<GeneratedAffirmation[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [source, setSource] = useState<'ai' | 'local' | null>(null);
   const [loading, setLoading] = useState(false);
@@ -32,23 +41,26 @@ const AiGenerator: React.FC<AiGeneratorProps> = ({ onSave }) => {
   const resultsRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
 
-  const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.length > 1
-          ? prev.filter((c) => c !== category)
-          : prev
-        : [...prev, category],
-    );
+  const categoryLabel = useMemo(() => formatCategoryList(categories), [categories]);
+
+  const toggleCategory = (nextCategory: Category) => {
+    if (categories.includes(nextCategory)) {
+      if (categories.length === 1) return;
+      onCategoriesChange(categories.filter((category) => category !== nextCategory));
+      return;
+    }
+
+    onCategoriesChange([...categories, nextCategory]);
   };
 
   const handleGenerate = async () => {
+    if (categories.length === 0) return;
+
     setLoading(true);
     setSavedCount(0);
     try {
       const result = await generateAffirmations({
-        categories: selectedCategories,
-        intention: intention.trim() || undefined,
+        categories,
         count: 5,
       });
       setGenerated(result.affirmations);
@@ -82,11 +94,9 @@ const AiGenerator: React.FC<AiGeneratorProps> = ({ onSave }) => {
   const saveAffirmations = (indices: number[]) => {
     if (indices.length === 0) return 0;
 
-    const category = selectedCategories[0] ?? 'Custom';
     const toSave = indices
       .map((index) => generated[index])
-      .filter(Boolean)
-      .map((text) => ({ text, category }));
+      .filter(Boolean);
 
     const saved = onSave(toSave);
     setSavedCount((prev) => prev + saved);
@@ -117,57 +127,54 @@ const AiGenerator: React.FC<AiGeneratorProps> = ({ onSave }) => {
       <div className="ai-generator-header">
         <IonIcon icon={sparkles} className="ai-generator-icon" />
         <div>
-          <h3>AI Affirmation Generator</h3>
-          <p>Personalized affirmations based on your focus areas</p>
+          <h3>Create Affirmations</h3>
+          <p>Select categories, then generate lines to save.</p>
         </div>
       </div>
 
-      <IonTextarea
-        placeholder="What do you want to focus on? e.g. morning confidence, career growth..."
-        value={intention}
-        onIonInput={(e) => setIntention(e.detail.value ?? '')}
-        rows={2}
-        autoGrow
-        className="ai-intention-input"
-      />
-
       <div className="ai-category-chips">
-        {CATEGORIES.map((category) => (
+        {CATEGORIES.map((chipCategory) => (
           <IonChip
-            key={category}
-            color={selectedCategories.includes(category) ? 'primary' : 'medium'}
-            outline={!selectedCategories.includes(category)}
-            onClick={() => toggleCategory(category)}
+            key={chipCategory}
+            color={categories.includes(chipCategory) ? 'primary' : 'medium'}
+            outline={!categories.includes(chipCategory)}
+            onClick={() => toggleCategory(chipCategory)}
           >
-            <IonLabel>{category}</IonLabel>
+            <IonLabel>{chipCategory}</IonLabel>
           </IonChip>
         ))}
       </div>
 
-      <IonButton expand="block" onClick={handleGenerate} disabled={loading}>
+      <IonButton
+        expand="block"
+        onClick={handleGenerate}
+        disabled={loading || categories.length === 0}
+      >
         {loading ? <IonSpinner name="crescent" /> : <IonIcon slot="start" icon={sparkles} />}
         {loading ? 'Generating...' : 'Generate Affirmations'}
       </IonButton>
-      <p className="ai-privacy-note">
-        Without an OpenAI API key, affirmations are generated locally. With a key, your intention may be sent to OpenAI.
-      </p>
 
       {source && generated.length > 0 && (
         <div className="ai-results" ref={resultsRef}>
           <p className="ai-source-label">
             {source === 'ai' ? 'Powered by AI' : 'Personalized for you'}
           </p>
-          <p className="ai-scroll-hint">Select affirmations to save, then tap Save to Library</p>
+          <p className="ai-scroll-hint">
+            Select affirmations to save to {categoryLabel}
+          </p>
           <div className="ai-results-scroll">
             <ul className="ai-results-list">
-              {generated.map((text, index) => (
-                <li key={index} className="ai-result-item">
+              {generated.map((affirmation, index) => (
+                <li key={`${affirmation.category}-${index}-${affirmation.text}`} className="ai-result-item">
                   <div className="ai-result-row">
                     <IonCheckbox
                       checked={selected.has(index)}
                       onIonChange={() => toggleSelected(index)}
                     />
-                    <span className="ai-result-text">{text}</span>
+                    <div className="ai-result-copy">
+                      <span className="ai-result-category">{affirmation.category}</span>
+                      <span className="ai-result-text">{affirmation.text}</span>
+                    </div>
                   </div>
                   <IonButton
                     size="small"
@@ -185,7 +192,7 @@ const AiGenerator: React.FC<AiGeneratorProps> = ({ onSave }) => {
           <div className="ai-results-actions" ref={actionsRef}>
             <IonButton expand="block" onClick={handleSaveSelected} disabled={selectedCount === 0}>
               <IonIcon slot="start" icon={checkmark} />
-              Save {selectedCount} to Library
+              Save {selectedCount} affirmation{selectedCount === 1 ? '' : 's'}
             </IonButton>
             <IonButton expand="block" fill="clear" onClick={handleGenerate} disabled={loading}>
               <IonIcon slot="start" icon={refresh} />
@@ -197,7 +204,7 @@ const AiGenerator: React.FC<AiGeneratorProps> = ({ onSave }) => {
 
       {savedCount > 0 && (
         <p className="ai-saved-msg" style={{ color: 'var(--ion-color-success)' }}>
-          {savedCount} affirmation{savedCount === 1 ? '' : 's'} saved to My Affirmations!
+          {savedCount} affirmation{savedCount === 1 ? '' : 's'} saved!
         </p>
       )}
     </div>

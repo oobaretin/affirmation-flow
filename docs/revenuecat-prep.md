@@ -22,13 +22,18 @@ You’ll link this when Apple Developer is active.
 | Entitlement | `premium` |
 | Monthly product | `com.affirmationflow.app.premium.monthly` |
 | Yearly product | `com.affirmationflow.app.premium.yearly` |
+| Introductory offer | **7-day free trial** on both products |
 
 These IDs must **exactly match** App Store Connect and `src/constants/subscription.ts`.
 
 ## Step 4 — When Apple Developer is active
 
 1. Create subscription group + products in **App Store Connect**
-2. In RevenueCat: **Project Settings → Apps → Add iOS app**
+2. On **each** subscription (monthly and annual), add an **Introductory Offer**:
+   - Type: **Free Trial**
+   - Duration: **7 days**
+   - Set the paid price that applies after the trial ends
+3. In RevenueCat: **Project Settings → Apps → Add iOS app**
 3. Add App Store Connect Shared Secret / App Store Connect API key (RevenueCat wizard)
 4. Create entitlement `premium` and attach both products
 5. Create offering **default** with Monthly + Annual packages

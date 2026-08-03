@@ -6,6 +6,7 @@ import {
 } from '@revenuecat/purchases-capacitor';
 import type { CustomerInfo } from '@revenuecat/purchases-typescript-internal-esm';
 import {
+  FREE_TRIAL_DAYS,
   SUBSCRIPTION_DISPLAY,
   SUBSCRIPTION_ENTITLEMENT_ID,
 } from '../constants/subscription';
@@ -48,6 +49,15 @@ export function formatPackagePrice(pkg: PurchasesPackage | null, plan: Subscript
 
 export function formatPackagePeriod(plan: SubscriptionPlan): string {
   return SUBSCRIPTION_DISPLAY[plan].period;
+}
+
+export function formatPlanTrialNote(
+  plan: SubscriptionPlan,
+  pkg: PurchasesPackage | null,
+): string {
+  const price = formatPackagePrice(pkg, plan);
+  const period = formatPackagePeriod(plan);
+  return `${FREE_TRIAL_DAYS}-day free trial, then ${price}/${period}`;
 }
 
 function activeEntitlement(customerInfo: CustomerInfo) {

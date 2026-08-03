@@ -30,13 +30,6 @@
   margin: 0;
 }
 
-.ai-privacy-note {
-  margin: 0.75rem 0 0;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  color: var(--ion-color-medium);
-}
-
 .ai-generator-header h3 {
   margin: 0;
   font-size: 1.1rem;
@@ -51,15 +44,6 @@
   line-height: 1.4;
 }
 
-.ai-intention-input {
-  margin-bottom: 1rem;
-  --background: var(--ion-color-step-50, #f4f4f4);
-  --color: var(--ion-text-color);
-  --placeholder-color: var(--ion-color-medium);
-  border-radius: 8px;
-  border: 1px solid var(--ion-color-step-200, #cccccc);
-}
-
 .ai-category-chips {
   display: flex;
   flex-wrap: wrap;
@@ -69,6 +53,21 @@
 
 .ai-category-chips ion-chip {
   --color: var(--ion-text-color);
+}
+
+.ai-result-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.ai-result-category {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ion-color-primary);
 }
 
 .ai-results {
@@ -160,11 +159,6 @@
   .ai-generator {
     border-color: var(--ion-color-step-400, #555);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .ai-intention-input {
-    --background: var(--ion-color-step-100, #2a2a2a);
-    border-color: var(--ion-color-step-400, #555);
   }
 
   .ai-results {

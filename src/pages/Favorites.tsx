@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import {
-  IonButton,
   IonContent,
   IonHeader,
   IonIcon,
@@ -21,7 +20,8 @@ import { useHistory } from 'react-router-dom';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSettings } from '../hooks/useSettings';
 import { shareAffirmation } from '../services/share';
-import { getVoiceOptions } from '../services/voiceProfiles';
+import { queueTodayAffirmation } from '../services/todaySelection';
+import { buildVoiceOptions } from '../services/voiceProfiles';
 import { getActiveSpeechText, isSpeaking, speakAffirmation, stopSpeaking } from '../services/voice';
 import './Favorites.css';
 
@@ -68,7 +68,7 @@ const Favorites: React.FC = () => {
       settings.repeatCount,
       () => setSpeakingId(null),
       unlimited,
-      getVoiceOptions(settings.voiceStyle, settings.voiceURI),
+      buildVoiceOptions(settings),
     );
     if (!isSpeaking()) setSpeakingId(null);
   };
@@ -78,6 +78,7 @@ const Favorites: React.FC = () => {
   };
 
   const handleUseToday = (affirmation: (typeof favorites)[number]) => {
+    queueTodayAffirmation(affirmation, true);
     history.push('/today', { affirmation });
   };
 

@@ -1,4 +1,6 @@
-export type VoiceStyle = 'soothing' | 'balanced' | 'bright';
+import { DEFAULT_ELEVENLABS_VOICE_ID } from '../constants/elevenLabsVoices';
+import { isElevenLabsConfigured } from './elevenLabs';
+import type { UserSettings, VoiceProvider, VoiceStyle } from '../types/settings';
 
 export interface VoicePreset {
   rate: number;
@@ -11,10 +13,10 @@ export interface VoicePreset {
 
 export const VOICE_PRESETS: Record<VoiceStyle, VoicePreset> = {
   soothing: {
-    rate: 0.72,
-    pitch: 0.88,
-    pauseMs: 1800,
-    volume: 0.92,
+    rate: 0.68,
+    pitch: 0.85,
+    pauseMs: 1900,
+    volume: 0.9,
     label: 'Soothing',
     description: 'Soft, slow, and warm — best for affirmations',
   },
@@ -42,33 +44,16 @@ export interface VoiceOptions {
   pauseMs: number;
   volume: number;
   voiceURI?: string;
+  useElevenLabs?: boolean;
+  elevenLabsVoiceId?: string;
 }
 
-const CALM_CLEAR_VOICE_HINTS = [
-  'samantha',
-  'karen',
-  'ava',
-  'allison',
-  'nicky',
-  'victoria',
-  'fiona',
-  'serena',
-  'tessa',
-  'moira',
-  'kate',
-  'susan',
-  'hazel',
-  'martha',
-];
+/** Legacy device voice allowlist — kept for tests; app uses ElevenLabs only. */
+const DEVICE_VOICE_ALLOWLIST = ['karen'] as const;
 
-const SUPPLEMENTAL_CALM_VOICE_HINTS = [
-  'joanna',
-  'salli',
-  'kendra',
-  'ivy',
-  'catherine',
-  'zira',
-];
+export const DEVICE_VOICE_PICKER_ORDER = ['karen'] as const;
+
+const SUPPLEMENTAL_CALM_VOICE_HINTS: string[] = [];
 
 const VOICE_EXCLUDE_HINTS = [
   'bells',
@@ -133,10 +118,7 @@ export function isCalmClearVoice(voice: SpeechSynthesisVoice): boolean {
   const name = voice.name.toLowerCase();
   if (!isEnglishVoice(voice)) return false;
   if (isExcludedVoice(name)) return false;
-  return (
-    matchesVoiceHint(name, CALM_CLEAR_VOICE_HINTS) ||
-    matchesVoiceHint(name, SUPPLEMENTAL_CALM_VOICE_HINTS)
-  );
+  return matchesVoiceHint(name, [...DEVICE_VOICE_ALLOWLIST]);
 }
 
 export function scoreVoiceForSoothing(voice: SpeechSynthesisVoice): number {
@@ -147,7 +129,7 @@ export function scoreVoiceForSoothing(voice: SpeechSynthesisVoice): number {
   else if (voice.lang.toLowerCase().startsWith('en')) score += 2;
   if (voice.localService) score += 2;
 
-  const hintIndex = CALM_CLEAR_VOICE_HINTS.findIndex((hint) =>
+  const hintIndex = DEVICE_VOICE_ALLOWLIST.findIndex((hint) =>
     matchesVoiceHint(name, [hint]),
   );
   if (hintIndex >= 0) score += 14 - hintIndex;
@@ -157,8 +139,9 @@ export function scoreVoiceForSoothing(voice: SpeechSynthesisVoice): number {
   );
   if (supplementalIndex >= 0) score += 8 - supplementalIndex;
 
-  if (name.includes('premium') || name.includes('enhanced')) score += 5;
+  if (name.includes('premium') || name.includes('enhanced') || name.includes('neural')) score += 8;
   if (name.includes('female') || name.includes('woman')) score += 3;
+  if (name.includes('compact')) score -= 4;
   if (isExcludedVoice(name)) score -= 20;
 
   return score;
@@ -218,18 +201,43 @@ export function filterCalmClearVoices(
     }
   }
 
-  return sortVoicesForSoothing(calmVoices);
+  return orderDevicePickerVoices(calmVoices);
+}
+
+function orderDevicePickerVoices(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
+  const byBaseName = new Map(
+    voices.map((voice) => [getVoiceBaseName(voice.name), voice]),
+  );
+
+  return DEVICE_VOICE_PICKER_ORDER
+    .map((name) => byBaseName.get(name))
+    .filter((voice): voice is SpeechSynthesisVoice => Boolean(voice));
+}
+
+/** Settings picker: Auto plus Karen only (free tier). */
+export function filterDeviceVoicesForPicker(
+  voices: SpeechSynthesisVoice[],
+  savedURI = '',
+): SpeechSynthesisVoice[] {
+  const allowed = dedupeVoicesByBaseName(voices.filter(isCalmClearVoice));
+  const ordered = orderDevicePickerVoices(allowed);
+
+  if (!savedURI) return ordered;
+
+  const saved = voices.find((voice) => voice.voiceURI === savedURI);
+  if (!saved || !isCalmClearVoice(saved)) return ordered;
+
+  const savedKey = getVoiceBaseName(saved.name);
+  if (ordered.some((voice) => getVoiceBaseName(voice.name) === savedKey)) {
+    return ordered;
+  }
+
+  return orderDevicePickerVoices([...allowed, saved]);
 }
 
 function getCalmClearPool(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice[] {
-  const calmVoices = filterCalmClearVoices(voices);
-  if (calmVoices.length > 0) return calmVoices;
-
-  const englishVoices = voices.filter(
-    (voice) =>
-      voice.lang.toLowerCase().startsWith('en') && !isExcludedVoice(voice.name.toLowerCase()),
-  );
-  return sortVoicesForSoothing(englishVoices).slice(0, 1);
+  const pool = dedupeVoicesByBaseName(voices.filter(isCalmClearVoice));
+  return sortVoicesForSoothing(pool);
 }
 
 export function getRecommendedVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
@@ -240,13 +248,30 @@ export function getRecommendedVoice(voices: SpeechSynthesisVoice[]): SpeechSynth
 export function getVoiceOptions(
   style: VoiceStyle,
   voiceURI = '',
+  voiceProvider: VoiceProvider = 'elevenlabs',
+  elevenLabsVoiceId = DEFAULT_ELEVENLABS_VOICE_ID,
 ): VoiceOptions {
   const preset = VOICE_PRESETS[style];
+  const useElevenLabs = voiceProvider === 'elevenlabs' && isElevenLabsConfigured();
+
   return {
     rate: preset.rate,
     pitch: preset.pitch,
     pauseMs: preset.pauseMs,
     volume: preset.volume,
     voiceURI: voiceURI || undefined,
+    useElevenLabs,
+    elevenLabsVoiceId: elevenLabsVoiceId || DEFAULT_ELEVENLABS_VOICE_ID,
   };
+}
+
+export function buildVoiceOptions(
+  settings: Pick<UserSettings, 'voiceStyle' | 'voiceURI' | 'voiceProvider' | 'elevenLabsVoiceId'>,
+): VoiceOptions {
+  return getVoiceOptions(
+    settings.voiceStyle,
+    settings.voiceURI,
+    'elevenlabs',
+    settings.elevenLabsVoiceId || DEFAULT_ELEVENLABS_VOICE_ID,
+  );
 }

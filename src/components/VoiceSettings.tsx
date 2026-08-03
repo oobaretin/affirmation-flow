@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   IonButton,
   IonItem,
@@ -7,25 +7,27 @@ import {
   IonRadioGroup,
   IonSelect,
   IonSelectOption,
-  IonText,
 } from '@ionic/react';
+import { ELEVENLABS_VOICES, type ElevenLabsVoice } from '../constants/elevenLabsVoices';
 import type { VoiceStyle } from '../types/settings';
-import { ensureVoicesLoaded, getAvailableVoices, previewVoice } from '../services/voice';
 import {
-  dedupeVoicesByBaseName,
-  filterCalmClearVoices,
-  formatVoiceLabel,
-  getRecommendedVoice,
-  getVoiceOptions,
-  VOICE_PRESETS,
-} from '../services/voiceProfiles';
+  filterVoicesForApiAccess,
+  getElevenLabsSubscription,
+  getLastPremiumVoiceError,
+  isElevenLabsConfigured,
+  listElevenLabsVoices,
+  pickDefaultApiVoice,
+  type ElevenLabsSubscriptionInfo,
+} from '../services/elevenLabs';
+import { previewVoice } from '../services/voice';
+import { buildVoiceOptions, VOICE_PRESETS } from '../services/voiceProfiles';
 import './VoiceSettings.css';
 
 type VoiceSettingsProps = {
   voiceStyle: VoiceStyle;
-  voiceURI: string;
+  elevenLabsVoiceId: string;
   onStyleChange: (style: VoiceStyle) => void;
-  onVoiceURIChange: (voiceURI: string) => void;
+  onElevenLabsVoiceChange: (voiceId: string) => void;
 };
 
 const PREVIEW_TEXT =
@@ -33,65 +35,102 @@ const PREVIEW_TEXT =
 
 const VoiceSettings: React.FC<VoiceSettingsProps> = ({
   voiceStyle,
-  voiceURI,
+  elevenLabsVoiceId,
   onStyleChange,
-  onVoiceURIChange,
+  onElevenLabsVoiceChange,
 }) => {
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [loadingVoices, setLoadingVoices] = useState(true);
-
-  const loadVoices = useCallback(async () => {
-    setLoadingVoices(true);
-    const loaded = await ensureVoicesLoaded();
-    setVoices(loaded.length > 0 ? loaded : getAvailableVoices());
-    setLoadingVoices(false);
-  }, []);
+  const [elevenLabsVoices, setElevenLabsVoices] = useState<ElevenLabsVoice[]>(ELEVENLABS_VOICES);
+  const [elevenLabsSubscription, setElevenLabsSubscription] = useState<ElevenLabsSubscriptionInfo | null>(null);
+  const [previewStatus, setPreviewStatus] = useState('');
+  const elevenLabsReady = isElevenLabsConfigured();
 
   useEffect(() => {
-    void loadVoices();
+    if (!elevenLabsReady) return;
 
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        void loadVoices();
-      };
-    }
+    let cancelled = false;
+
+    Promise.all([listElevenLabsVoices(), getElevenLabsSubscription()])
+      .then(([loaded, subscription]) => {
+        if (cancelled) return;
+        setElevenLabsVoices(loaded);
+        setElevenLabsSubscription(subscription);
+
+        const nextVoiceId = pickDefaultApiVoice(loaded, subscription, elevenLabsVoiceId);
+        if (nextVoiceId !== elevenLabsVoiceId) {
+          onElevenLabsVoiceChange(nextVoiceId);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setElevenLabsVoices(ELEVENLABS_VOICES);
+      });
 
     return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.onvoiceschanged = null;
-      }
+      cancelled = true;
     };
-  }, [loadVoices]);
+  }, [elevenLabsReady, elevenLabsVoiceId, onElevenLabsVoiceChange]);
 
-  const calmVoices = useMemo(
-    () => dedupeVoicesByBaseName(filterCalmClearVoices(voices, voiceURI)),
-    [voices, voiceURI],
+  const apiAccessibleVoices = useMemo(
+    () => filterVoicesForApiAccess(elevenLabsVoices, elevenLabsSubscription),
+    [elevenLabsVoices, elevenLabsSubscription],
   );
 
-  const recommendedVoice = useMemo(
-    () => getRecommendedVoice(voices),
-    [voices],
-  );
+  const premiumVoiceOptions = useMemo(() => {
+    const baseVoices = apiAccessibleVoices;
+    if (!elevenLabsVoiceId) return baseVoices;
+    if (baseVoices.some((voice) => voice.id === elevenLabsVoiceId)) {
+      return baseVoices;
+    }
 
-  const handlePreview = () => {
-    previewVoice(PREVIEW_TEXT, getVoiceOptions(voiceStyle, voiceURI));
+    return [
+      { id: elevenLabsVoiceId, name: 'Saved voice', description: '' },
+      ...baseVoices,
+    ];
+  }, [apiAccessibleVoices, elevenLabsVoiceId]);
+
+  const previewOptions = buildVoiceOptions({
+    voiceStyle,
+    voiceURI: '',
+    voiceProvider: 'elevenlabs',
+    elevenLabsVoiceId,
+  });
+
+  const handlePreview = async () => {
+    setPreviewStatus('');
+    try {
+      await previewVoice(PREVIEW_TEXT, previewOptions);
+      const error = getLastPremiumVoiceError();
+      if (error) {
+        setPreviewStatus(error);
+      }
+    } catch {
+      setPreviewStatus('Preview unavailable. Check your premium voice configuration.');
+    }
   };
 
   return (
     <div className="voice-settings">
-      <IonText color="medium">
-        <p className="settings-hint">
-          Keep <strong>Soothing</strong> + <strong>Auto</strong> for the softest tone.
-        </p>
-      </IonText>
+      <p className="voice-settings-intro">
+        AffirmEaze uses natural premium voices for every spoken affirmation.
+      </p>
 
-      {loadingVoices && (
-        <p className="voice-status">Loading voices...</p>
-      )}
-
-      {!loadingVoices && recommendedVoice && !voiceURI && (
-        <p className="voice-recommended">
-          Auto will use: <strong>{formatVoiceLabel(recommendedVoice)}</strong>
+      {elevenLabsReady ? (
+        <IonItem lines="none">
+          <IonSelect
+            label="Voice"
+            labelPlacement="stacked"
+            value={elevenLabsVoiceId}
+            onIonChange={(e) => onElevenLabsVoiceChange(e.detail.value)}
+          >
+            {premiumVoiceOptions.map((voice) => (
+              <IonSelectOption key={voice.id} value={voice.id}>
+                {voice.name}
+              </IonSelectOption>
+            ))}
+          </IonSelect>
+        </IonItem>
+      ) : (
+        <p className="voice-status voice-status-warning">
+          Premium voice is not configured in this build.
         </p>
       )}
 
@@ -104,42 +143,20 @@ const VoiceSettings: React.FC<VoiceSettingsProps> = ({
             <IonRadio value={style} justify="start" labelPlacement="end">
               <IonLabel>
                 <h3>{VOICE_PRESETS[style].label}</h3>
-                <p>{VOICE_PRESETS[style].description}</p>
               </IonLabel>
             </IonRadio>
           </IonItem>
         ))}
       </IonRadioGroup>
 
-      {calmVoices.length > 0 && (
-        <IonItem lines="none">
-          <IonSelect
-            label="Voice"
-            labelPlacement="stacked"
-            value={voiceURI || 'auto'}
-            onIonChange={(e) => onVoiceURIChange(e.detail.value === 'auto' ? '' : e.detail.value)}
-          >
-            <IonSelectOption value="auto">Auto (best calm voice)</IonSelectOption>
-            {calmVoices.map((voice) => {
-              const isRecommended = voice.voiceURI === recommendedVoice?.voiceURI;
-              const label = formatVoiceLabel(voice);
-              return (
-                <IonSelectOption key={voice.voiceURI} value={voice.voiceURI}>
-                  {isRecommended ? `★ ${label}` : label}
-                </IonSelectOption>
-              );
-            })}
-          </IonSelect>
-        </IonItem>
-      )}
-
-      {!loadingVoices && calmVoices.length === 0 && (
-        <p className="voice-status">No calm voices found on this device.</p>
-      )}
-
-      <IonButton expand="block" fill="outline" onClick={handlePreview}>
+      <IonButton expand="block" fill="outline" onClick={() => void handlePreview()}>
         Preview Voice
       </IonButton>
+      {previewStatus && (
+        <p className="voice-status voice-status-warning">
+          {previewStatus}
+        </p>
+      )}
     </div>
   );
 };

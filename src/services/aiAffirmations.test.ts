@@ -2,16 +2,30 @@ import { describe, expect, it } from 'vitest';
 import { generateAffirmations } from './aiAffirmations';
 
 describe('generateAffirmations', () => {
-  it('generates local affirmations from categories and intention', async () => {
+  it('generates local affirmations with category tags', async () => {
     const result = await generateAffirmations({
-      categories: ['Confidence'],
-      intention: 'public speaking',
-      count: 3,
+      categories: ['Confidence', 'Peace'],
+      count: 4,
     });
 
-    expect(result.affirmations).toHaveLength(3);
+    expect(result.affirmations).toHaveLength(4);
     expect(result.source).toBe('local');
-    expect(result.affirmations[0]).toMatch(/^I /);
-    expect(result.affirmations[0]).not.toContain('Alex');
+    result.affirmations.forEach((affirmation) => {
+      expect(['Confidence', 'Peace']).toContain(affirmation.category);
+      expect(affirmation.text.length).toBeGreaterThan(0);
+      expect(affirmation.text).not.toContain('Alex');
+    });
+  });
+
+  it('uses default category when none are provided', async () => {
+    const result = await generateAffirmations({
+      categories: [],
+      count: 2,
+    });
+
+    expect(result.affirmations).toHaveLength(2);
+    result.affirmations.forEach((affirmation) => {
+      expect(affirmation.category).toBe('Self-Love');
+    });
   });
 });

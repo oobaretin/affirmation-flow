@@ -22,4 +22,10 @@ describe('affirmation selection', () => {
     const daily = getDailyAffirmation([], ['Health']);
     expect(daily.category).toBe('Health');
   });
+
+  it('includes custom affirmations in daily selection', () => {
+    const custom = [{ id: 'custom-1', text: 'My personal mantra.', category: 'Custom' }];
+    const daily = getDailyAffirmation(custom, ['Peace']);
+    expect(['Peace', 'Custom']).toContain(daily.category);
+  });
 });
