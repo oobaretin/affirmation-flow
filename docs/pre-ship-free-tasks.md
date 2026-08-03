@@ -23,8 +23,8 @@ Use this checklist while you build and test locally. Check items off as you go.
 ## Privacy policy URL
 
 - [x] Update `public/privacy.html` if needed (already aligned with in-app policy)
-- [x] Hosted at [AffirmEaze](https://affirmeaze.netlify.app)
-- [x] Privacy policy URL: `https://affirmeaze.netlify.app/privacy`
+- [ ] Enable GitHub Pages (see [host-privacy-policy.md](./host-privacy-policy.md))
+- [ ] Privacy policy URL: `https://oobaretin.github.io/affirmation-flow/privacy/`
 
 ## RevenueCat (free account — prep only)
 

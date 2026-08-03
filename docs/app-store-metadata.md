@@ -22,12 +22,13 @@ Start your day with calm, spoken affirmations. Personalize your focus, build str
 
 AffirmEaze is your daily space for calm self-belief.
 
-Build a gentle affirmation practice with soothing voice playback, personalized focus areas, favorites, streaks, and a growing library — including AI-assisted custom affirmations.
+Build a gentle affirmation practice with natural premium voices, personalized focus areas, favorites, streaks, and a growing library — including AI-assisted custom affirmations.
 
 **What’s included in Premium:**
 
+• Natural premium voices for every spoken affirmation  
 • Daily affirmation tailored to your focus areas  
-• Soothing voice with mantra-style repeats  
+• Mantra-style repeats with calm delivery  
 • Library, search, favorites, and streak tracking  
 • Daily reminders on your schedule  
 • AI affirmation generator  
@@ -37,7 +38,7 @@ AffirmEaze is designed to feel soft and unhurried — like a quiet moment before
 
 **Subscription**
 
-AffirmEaze Premium is required to use the app. Choose monthly or annual billing. Payment is charged to your Apple ID. Subscriptions renew automatically unless canceled at least 24 hours before the end of the current period. Manage or cancel anytime in your App Store account settings.
+AffirmEaze Premium is required to use the app after a **7-day free trial**. Choose monthly or annual billing. Payment is charged to your Apple ID when the trial ends unless you cancel at least 24 hours before it ends. Subscriptions renew automatically unless canceled at least 24 hours before the end of the current period. Manage or cancel anytime in your App Store account settings.
 
 **Privacy**
 
@@ -53,15 +54,15 @@ affirmation,mantra,self love,mindfulness,calm,daily motivation,gratitude,meditat
 
 ## Support URL
 
-https://affirmeaze.netlify.app
+https://oobaretin.github.io/affirmation-flow/
 
 ## Privacy Policy URL (App Store Connect)
 
-https://affirmeaze.netlify.app/privacy
+https://oobaretin.github.io/affirmation-flow/privacy/
 
 ## Marketing URL
 
-https://affirmeaze.netlify.app
+https://oobaretin.github.io/affirmation-flow/
 
 Optional — leave blank for v1 or use your future website.
 
@@ -76,7 +77,7 @@ AffirmEaze is a subscription-only affirmation app.
 
 Flow:
 1. User completes onboarding (name, focus areas, voice/reminder preferences)
-2. User sees paywall and must subscribe via Apple In-App Purchase
+2. User sees paywall, picks monthly or annual, and starts a 7-day free trial via Apple In-App Purchase
 3. After subscribing, user accesses Today, Library, Favorites, and Settings
 
 No login or cloud account. Data is stored locally on device.
@@ -92,9 +93,9 @@ Test subscription products:
 
 | Product ID | Display name | Price |
 |------------|--------------|-------|
-| `com.affirmationflow.app.premium.monthly` | AffirmEaze Premium Monthly | $2.99 |
-| `com.affirmationflow.app.premium.yearly` | AffirmEaze Premium Annual | $19.99 |
+| `com.affirmationflow.app.premium.monthly` | AffirmEaze Premium Monthly | $4.99 |
+| `com.affirmationflow.app.premium.yearly` | AffirmEaze Premium Annual | $39.99 |
 
-**Monthly description:** Full access to AffirmEaze — daily affirmations, voice, library, AI, and reminders.
+**Monthly description:** Full access — natural premium voices, daily affirmations, library, AI, and reminders.
 
-**Annual description:** Full access to AffirmEaze. Best value — save vs monthly.
+**Annual description:** Full access with natural premium voices. Best value — save vs monthly.

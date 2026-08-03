@@ -29,7 +29,8 @@ import {
 } from '../services/notifications';
 import { clearAllAppData, markExplicitLogout, pauseSession } from '../services/session';
 import { openManageSubscriptions } from '../services/subscription';
-import { APP_NAME, APP_VERSION, SUPPORT_EMAIL } from '../constants/app';
+import { openExternalUrl } from '../services/links';
+import { APP_NAME, APP_VERSION, PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '../constants/app';
 import './Settings.css';
 
 const Settings: React.FC = () => {
@@ -197,13 +198,7 @@ const Settings: React.FC = () => {
           </IonItem>
         </IonList>
 
-        <div className="settings-section">
-          <IonText color="medium">
-            <h3>Focus Areas</h3>
-          </IonText>
-          <p className="settings-hint">
-            Your daily affirmation prefers these categories
-          </p>
+        <div className="settings-section settings-focus-section">
           <FocusCategoryPicker
             selected={settings.focusCategories}
             onChange={handleFocusChange}
@@ -233,9 +228,9 @@ const Settings: React.FC = () => {
           {settings.voiceEnabled && (
             <VoiceSettings
               voiceStyle={settings.voiceStyle}
-              voiceURI={settings.voiceURI}
+              elevenLabsVoiceId={settings.elevenLabsVoiceId}
               onStyleChange={(voiceStyle) => updateSettings({ voiceStyle })}
-              onVoiceURIChange={(voiceURI) => updateSettings({ voiceURI })}
+              onElevenLabsVoiceChange={(elevenLabsVoiceId) => updateSettings({ elevenLabsVoiceId })}
             />
           )}
         </div>
@@ -277,7 +272,7 @@ const Settings: React.FC = () => {
             {APP_NAME} v{APP_VERSION}
           </p>
           <div className="settings-actions">
-            <IonButton expand="block" fill="clear" onClick={() => history.push('/privacy')}>
+            <IonButton expand="block" fill="clear" onClick={() => openExternalUrl(PRIVACY_POLICY_URL)}>
               Privacy Policy
             </IonButton>
             <IonButton

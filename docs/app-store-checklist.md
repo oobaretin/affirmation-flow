@@ -8,18 +8,18 @@ See [pre-ship-free-tasks.md](./pre-ship-free-tasks.md) for the full free checkli
 - [ ] Test full app flow in simulator ([local-testing.md](./local-testing.md))
 - [ ] Finalize copy in [app-store-metadata.md](./app-store-metadata.md)
 - [ ] Capture screenshots ([screenshots-guide.md](./screenshots-guide.md))
-- [ ] Host privacy policy URL ([host-privacy-policy.md](./host-privacy-policy.md))
+- [ ] Enable GitHub Pages ([host-privacy-policy.md](./host-privacy-policy.md))
 - [ ] Create RevenueCat account ([revenuecat-prep.md](./revenuecat-prep.md))
 
 ## Before submission (requires Apple Developer Program)
 
-- [ ] Host privacy policy URL (upload `public/privacy.html` or use a website)
+- [ ] Confirm privacy URL loads: https://oobaretin.github.io/affirmation-flow/privacy/
 - [ ] Add support email: support@affirmeaze.app
 - [ ] Capture screenshots (6.7" iPhone 16 Pro Max): Paywall, Today, Library, Onboarding, Settings
 - [ ] Complete App Privacy questionnaire (no tracking, local data, subscription via Apple)
 - [ ] TestFlight beta with 2–3 testers
 - [ ] Verify notifications on physical device
-- [ ] Verify voice on physical device (Samantha / soothing preset)
+- [ ] Verify premium voice playback on physical device (ElevenLabs / soothing preset)
 - [ ] Verify subscription purchase, restore, and paywall gate on physical device
 
 ## Subscription setup (required)
@@ -27,8 +27,8 @@ See [pre-ship-free-tasks.md](./pre-ship-free-tasks.md) for the full free checkli
 1. **App Store Connect**
    - Create subscription group: `AffirmEaze Premium`
    - Add products:
-     - `com.affirmationflow.app.premium.monthly` — $2.99/month
-     - `com.affirmationflow.app.premium.yearly` — $19.99/year
+     - `com.affirmationflow.app.premium.monthly` — $4.99/month
+     - `com.affirmationflow.app.premium.yearly` — $39.99/year
    - Submit subscription metadata for review with the app
 
 2. **RevenueCat**

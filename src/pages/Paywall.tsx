@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
   IonButton,
@@ -8,19 +8,35 @@ import {
   IonSpinner,
   IonText,
 } from '@ionic/react';
-import { checkmarkCircle } from 'ionicons/icons';
+import { checkmarkCircle, stopCircle, volumeHigh } from 'ionicons/icons';
 import AppLogo from '../components/AppLogo';
-import { PAYWALL_FEATURES, SUBSCRIPTION_DISPLAY, SUBSCRIPTION_LEGAL } from '../constants/subscription';
+import { PRIVACY_POLICY_URL } from '../constants/app';
+import { ELEVENLABS_VOICES } from '../constants/elevenLabsVoices';
+import {
+  PAYWALL_FEATURES,
+  SUBSCRIPTION_DISPLAY,
+  SUBSCRIPTION_TRIAL_HEADLINE,
+  YEARLY_MONTHLY_EQUIVALENT,
+  buildSubscriptionLegal,
+} from '../constants/subscription';
+import { getDailyAffirmation } from '../data/affirmations';
+import { useSettings } from '../hooks/useSettings';
 import { useSubscription } from '../hooks/useSubscription';
+import { isElevenLabsConfigured } from '../services/elevenLabs';
 import {
   formatPackagePeriod,
   formatPackagePrice,
+  formatPlanTrialNote,
   isSubscriptionDevBypass,
 } from '../services/subscription';
+import { buildVoiceOptions } from '../services/voiceProfiles';
+import { openExternalUrl } from '../services/links';
+import { isSpeaking, previewVoice, stopSpeaking } from '../services/voice';
 import './Paywall.css';
 
 const Paywall: React.FC = () => {
   const history = useHistory();
+  const { settings } = useSettings();
   const {
     loading,
     purchasing,
@@ -33,6 +49,15 @@ const Paywall: React.FC = () => {
     clearError,
   } = useSubscription();
   const [selectedPlan, setSelectedPlan] = useState<'yearly' | 'monthly'>('yearly');
+  const [previewPlaying, setPreviewPlaying] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+
+  const previewText = useMemo(
+    () => getDailyAffirmation([], settings.focusCategories).text,
+    [settings.focusCategories],
+  );
+  const voiceReady = isElevenLabsConfigured() && settings.voiceEnabled;
+  const previewOptions = buildVoiceOptions(settings);
 
   const finish = () => {
     history.replace('/today');
@@ -50,8 +75,35 @@ const Paywall: React.FC = () => {
     if (success) finish();
   };
 
+  const handlePreview = async () => {
+    if (previewPlaying) {
+      stopSpeaking();
+      setPreviewPlaying(false);
+      return;
+    }
+
+    setPreviewError('');
+    setPreviewPlaying(true);
+    try {
+      await previewVoice(previewText, previewOptions);
+    } catch {
+      setPreviewError('Voice preview unavailable right now.');
+    } finally {
+      if (!isSpeaking()) {
+        setPreviewPlaying(false);
+      } else {
+        setPreviewPlaying(false);
+      }
+    }
+  };
+
   const monthlyPrice = formatPackagePrice(offering.monthly, 'monthly');
   const yearlyPrice = formatPackagePrice(offering.yearly, 'yearly');
+  const selectedPrice = selectedPlan === 'yearly' ? yearlyPrice : monthlyPrice;
+  const monthlyTrialNote = formatPlanTrialNote('monthly', offering.monthly);
+  const yearlyTrialNote = formatPlanTrialNote('yearly', offering.yearly);
+  const subscriptionLegal = buildSubscriptionLegal(selectedPlan, selectedPrice);
+  const greeting = settings.name ? `${settings.name}, listen to today's affirmation` : 'Listen to today\'s affirmation';
 
   return (
     <IonPage>
@@ -59,10 +111,37 @@ const Paywall: React.FC = () => {
         <div className="paywall-shell">
           <AppLogo size="md" className="paywall-logo" />
 
-          <h1>Unlock AffirmEaze Premium</h1>
+          <h1>Hear the difference</h1>
           <p className="paywall-subtitle">
-            A calm daily affirmation practice with voice, favorites, streaks, and AI — all included.
+            Natural premium voices bring your daily affirmations to life.
           </p>
+          <p className="paywall-trial-headline">{SUBSCRIPTION_TRIAL_HEADLINE}</p>
+
+          {voiceReady && (
+            <div className="paywall-preview">
+              <p className="paywall-preview-label">{greeting}</p>
+              <p className="paywall-preview-text">&ldquo;{previewText}&rdquo;</p>
+              <div className="paywall-voice-tags">
+                {ELEVENLABS_VOICES.map((voice) => (
+                  <span key={voice.id} className="paywall-voice-tag">
+                    {voice.name} · {voice.description}
+                  </span>
+                ))}
+              </div>
+              <IonButton
+                expand="block"
+                fill="outline"
+                className="paywall-preview-btn"
+                onClick={() => void handlePreview()}
+              >
+                <IonIcon slot="start" icon={previewPlaying ? stopCircle : volumeHigh} />
+                {previewPlaying ? 'Stop Preview' : 'Hear Sample Voice'}
+              </IonButton>
+              {previewError && (
+                <p className="paywall-preview-error">{previewError}</p>
+              )}
+            </div>
+          )}
 
           <ul className="paywall-features">
             {PAYWALL_FEATURES.map((feature) => (
@@ -94,6 +173,10 @@ const Paywall: React.FC = () => {
                     {yearlyPrice}
                     <span> / {formatPackagePeriod('yearly')}</span>
                   </p>
+                  <p className="paywall-plan-equivalent">
+                    {YEARLY_MONTHLY_EQUIVALENT}/mo billed annually
+                  </p>
+                  <p className="paywall-plan-trial">{yearlyTrialNote}</p>
                 </button>
 
                 <button
@@ -108,6 +191,7 @@ const Paywall: React.FC = () => {
                     {monthlyPrice}
                     <span> / {formatPackagePeriod('monthly')}</span>
                   </p>
+                  <p className="paywall-plan-trial">{monthlyTrialNote}</p>
                 </button>
               </div>
 
@@ -133,7 +217,7 @@ const Paywall: React.FC = () => {
                 disabled={purchasing || (!nativePurchasesEnabled && !devBypassEnabled)}
                 onClick={() => void handlePurchase()}
               >
-                {purchasing ? 'Processing...' : 'Start Premium'}
+                {purchasing ? 'Processing...' : 'Start 7-Day Free Trial'}
               </IonButton>
 
               <IonButton
@@ -145,13 +229,13 @@ const Paywall: React.FC = () => {
                 Restore Purchases
               </IonButton>
 
-              <IonButton expand="block" fill="clear" onClick={() => history.push('/privacy')}>
+              <IonButton expand="block" fill="clear" onClick={() => openExternalUrl(PRIVACY_POLICY_URL)}>
                 Privacy Policy
               </IonButton>
             </>
           )}
 
-          <p className="paywall-legal">{SUBSCRIPTION_LEGAL}</p>
+          <p className="paywall-legal">{subscriptionLegal}</p>
         </div>
       </IonContent>
     </IonPage>

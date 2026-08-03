@@ -1,6 +1,6 @@
 # AffirmEaze
 
-Daily affirmations with voice practice, favorites, streaks, and a personal library — built for calm self-belief.
+Daily affirmations with natural premium voices, favorites, streaks, and a personal library — built for calm self-belief.
 
 **Premium subscription app** — users subscribe after onboarding to access the full app.
 
@@ -9,7 +9,7 @@ Daily affirmations with voice practice, favorites, streaks, and a personal libra
 - **Today** — focus-based daily affirmation, streak tracking, pin, share, voice
 - **Library** — browse by category, search, custom affirmations, AI generator
 - **Favorites** — speak, share, and send to Today
-- **Settings** — voice style, notifications, focus areas, subscription management
+- **Settings** — premium voice, notifications, focus areas, subscription management
 
 ## Development
 
@@ -70,6 +70,6 @@ Remove `VITE_SUBSCRIPTION_DEV_BYPASS` for production builds. See [docs/app-store
 | **App name** | AffirmEaze |
 | **Bundle ID** | com.affirmationflow.app |
 | **Support email** | support@affirmeaze.app |
-| **Privacy policy** | https://affirmeaze.netlify.app/privacy |
-| **Marketing / support URL** | https://affirmeaze.netlify.app |
+| **Privacy policy** | https://oobaretin.github.io/affirmation-flow/privacy/ |
+| **Marketing / support URL** | https://oobaretin.github.io/affirmation-flow/ |
 | **Version** | 1.0.0 |

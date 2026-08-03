@@ -40,17 +40,17 @@ const Privacy: React.FC = () => (
 
         <h2>Data that may leave your device</h2>
         <p>
-          <strong>AI Generator (optional):</strong> If you configure an OpenAI API key, your
-          intention text and selected categories are sent to OpenAI to generate affirmations.
-          Without an API key, generation runs locally using built-in templates only.
+          <strong>Affirmation generator:</strong> Suggestions are created on your device from
+          your selected category. This text is not sent to our servers.
         </p>
         <p>
           <strong>Share:</strong> When you share an affirmation, your device&apos;s share sheet
           or clipboard is used. We do not receive shared content.
         </p>
         <p>
-          <strong>Voice:</strong> Affirmations are spoken using your device&apos;s built-in
-          text-to-speech. Audio is processed on-device.
+          <strong>Voice:</strong> Spoken affirmations use premium voice synthesis (ElevenLabs).
+          Affirmation text is sent to ElevenLabs to generate audio. Audio is played on your device
+          and is not stored on our servers.
         </p>
 
         <h2>Notifications</h2>
