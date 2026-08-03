@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
+  IonAccordion,
+  IonAccordionGroup,
   IonAlert,
   IonButton,
   IonContent,
@@ -8,7 +10,6 @@ import {
   IonInput,
   IonItem,
   IonLabel,
-  IonList,
   IonPage,
   IonRange,
   IonText,
@@ -104,6 +105,10 @@ const Settings: React.FC = () => {
     });
   };
 
+  const subscriptionSummary = isSubscribed
+    ? `Premium ${status.plan === 'yearly' ? 'Annual' : 'Monthly'} · Renews ${formatRenewalDate(status.expirationDate)}`
+    : 'Premium subscription required';
+
   return (
     <IonPage>
       <IonHeader>
@@ -128,20 +133,25 @@ const Settings: React.FC = () => {
 
         <div className="settings-section">
           <IonText color="medium">
-            <h3>Subscription</h3>
+            <h3>Account</h3>
           </IonText>
-          <p className="settings-hint">
-            {isSubscribed
-              ? `Premium ${status.plan === 'yearly' ? 'Annual' : 'Monthly'} · Renews ${formatRenewalDate(status.expirationDate)}`
-              : 'Premium subscription required to use AffirmEaze.'}
-          </p>
-          <div className="settings-actions">
-            <IonButton expand="block" fill="outline" onClick={() => openManageSubscriptions()}>
+          <IonItem lines="full" className="settings-inline-item">
+            <IonInput
+              label="Your name"
+              labelPlacement="stacked"
+              value={settings.name}
+              onIonInput={(e) => updateSettings({ name: e.detail.value ?? '' })}
+            />
+          </IonItem>
+          <p className="settings-hint settings-subscription-summary">{subscriptionSummary}</p>
+          <div className="settings-actions settings-actions-compact">
+            <IonButton expand="block" fill="outline" size="small" onClick={() => openManageSubscriptions()}>
               Manage Subscription
             </IonButton>
             <IonButton
               expand="block"
               fill="clear"
+              size="small"
               disabled={purchasing}
               onClick={() => void restore()}
             >
@@ -150,67 +160,12 @@ const Settings: React.FC = () => {
           </div>
         </div>
 
-        <div className="settings-section settings-account-section">
-          <IonText color="medium">
-            <h3>This Device</h3>
-          </IonText>
-          <p className="settings-hint">
-            AffirmEaze stores everything locally on this device. There is no cloud account.
-          </p>
-          <div className="settings-actions">
-            <IonButton
-              expand="block"
-              color="primary"
-              className="settings-logout-btn"
-              onClick={() => setShowLogoutAlert(true)}
-            >
-              Lock App
-            </IonButton>
-            <IonButton
-              expand="block"
-              fill="outline"
-              onClick={() => {
-                resetOnboarding();
-                history.push('/onboarding');
-              }}
-            >
-              Redo Onboarding
-            </IonButton>
-            <IonButton
-              expand="block"
-              fill="outline"
-              color="danger"
-              onClick={() => setShowClearAlert(true)}
-            >
-              Clear All Data & Start Over
-            </IonButton>
-          </div>
-        </div>
-
-        <IonList>
-          <IonItem>
-            <IonInput
-              label="Your name"
-              labelPlacement="stacked"
-              value={settings.name}
-              onIonInput={(e) => updateSettings({ name: e.detail.value ?? '' })}
-            />
-          </IonItem>
-        </IonList>
-
-        <div className="settings-section settings-focus-section">
-          <FocusCategoryPicker
-            selected={settings.focusCategories}
-            onChange={handleFocusChange}
-          />
-        </div>
-
-        <div className="settings-section">
+        <div className="settings-section settings-practice-section">
           <IonText color="medium">
             <h3>Your Practice</h3>
           </IonText>
           <p className="settings-hint">
-            Mantra-style repeats or unlimited until you stop
+            Repeats, voice, reminders, and focus areas
           </p>
           <RepeatSelector
             repeatMode={settings.repeatMode}
@@ -218,7 +173,7 @@ const Settings: React.FC = () => {
             onModeChange={(mode) => updateSettings({ repeatMode: mode })}
             onCountChange={(count) => updateSettings({ repeatCount: count, repeatMode: 'fixed' })}
           />
-          <IonItem lines="none">
+          <IonItem lines="none" className="settings-inline-item">
             <IonLabel>Voice affirmations</IonLabel>
             <IonToggle
               checked={settings.voiceEnabled}
@@ -233,13 +188,7 @@ const Settings: React.FC = () => {
               onElevenLabsVoiceChange={(elevenLabsVoiceId) => updateSettings({ elevenLabsVoiceId })}
             />
           )}
-        </div>
-
-        <div className="settings-section">
-          <IonText color="medium">
-            <h3>Notifications</h3>
-          </IonText>
-          <IonItem lines="none">
+          <IonItem lines="none" className="settings-inline-item">
             <IonLabel>Daily reminder</IonLabel>
             <IonToggle
               checked={settings.notificationsEnabled}
@@ -262,6 +211,10 @@ const Settings: React.FC = () => {
               />
             </>
           )}
+          <FocusCategoryPicker
+            selected={settings.focusCategories}
+            onChange={handleFocusChange}
+          />
         </div>
 
         <div className="settings-section settings-about-section">
@@ -271,18 +224,66 @@ const Settings: React.FC = () => {
           <p className="settings-hint">
             {APP_NAME} v{APP_VERSION}
           </p>
-          <div className="settings-actions">
-            <IonButton expand="block" fill="clear" onClick={() => openExternalUrl(PRIVACY_POLICY_URL)}>
+          <div className="settings-actions settings-actions-compact">
+            <IonButton expand="block" fill="clear" size="small" onClick={() => openExternalUrl(PRIVACY_POLICY_URL)}>
               Privacy Policy
             </IonButton>
             <IonButton
               expand="block"
               fill="clear"
+              size="small"
               href={`mailto:${SUPPORT_EMAIL}`}
             >
               Contact Support
             </IonButton>
           </div>
+        </div>
+
+        <div className="settings-section settings-advanced-section">
+          <IonAccordionGroup className="settings-advanced-accordion">
+            <IonAccordion value="advanced">
+              <IonItem slot="header" color="light" lines="none">
+                <IonLabel>
+                  <IonText color="medium">
+                    <h3 className="settings-advanced-heading">Advanced</h3>
+                  </IonText>
+                  <p className="settings-advanced-summary">Lock, reset, or erase this device</p>
+                </IonLabel>
+              </IonItem>
+              <div slot="content" className="settings-advanced-content">
+                <p className="settings-hint">
+                  AffirmEaze stores everything locally on this device. There is no cloud account.
+                </p>
+                <div className="settings-actions">
+                  <IonButton
+                    expand="block"
+                    color="primary"
+                    onClick={() => setShowLogoutAlert(true)}
+                  >
+                    Lock App
+                  </IonButton>
+                  <IonButton
+                    expand="block"
+                    fill="outline"
+                    onClick={() => {
+                      resetOnboarding();
+                      history.push('/onboarding');
+                    }}
+                  >
+                    Redo Onboarding
+                  </IonButton>
+                  <IonButton
+                    expand="block"
+                    fill="outline"
+                    color="danger"
+                    onClick={() => setShowClearAlert(true)}
+                  >
+                    Clear All Data & Start Over
+                  </IonButton>
+                </div>
+              </div>
+            </IonAccordion>
+          </IonAccordionGroup>
         </div>
 
         <IonAlert

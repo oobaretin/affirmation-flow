@@ -42,7 +42,7 @@ describe('Settings layout', () => {
     );
   });
 
-  it('renders Log Out in the Account section', () => {
+  it('renders primary sections with advanced actions tucked away', () => {
     render(
       <SettingsProvider>
         <CustomAffirmationsProvider>
@@ -54,9 +54,11 @@ describe('Settings layout', () => {
         </CustomAffirmationsProvider>
       </SettingsProvider>,
     );
-    expect(screen.getByText('Lock App')).toBeInTheDocument();
-    expect(screen.getByText('This Device')).toBeInTheDocument();
-    expect(screen.getByText('Focus Areas')).toBeInTheDocument();
+    expect(screen.getByText('Account')).toBeInTheDocument();
     expect(screen.getByText('Your Practice')).toBeInTheDocument();
+    expect(screen.getByText('Focus Areas')).toBeInTheDocument();
+    expect(screen.getByText('Advanced')).toBeInTheDocument();
+    expect(screen.getByText('Lock App')).toBeInTheDocument();
+    expect(screen.queryByText('This Device')).not.toBeInTheDocument();
   });
 });
