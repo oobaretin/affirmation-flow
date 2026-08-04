@@ -27,25 +27,23 @@ describe('App onboarding flow', () => {
     localStorage.clear();
   });
 
-  it('completes onboarding and shows Today tab after Start My Journey', async () => {
+  it('completes the three-step onboarding and shows Today tab', async () => {
     const user = userEvent.setup();
     render(<App />);
-
-    const nameInput = await screen.findByLabelText(/your name/i);
-    await user.type(nameInput, 'TestUser');
 
     const focusCheckbox = document.querySelector('ion-checkbox');
     expect(focusCheckbox).toBeTruthy();
     await user.click(focusCheckbox!);
     await user.click(screen.getByText('Continue'));
 
+    await user.click(screen.getByText('Continue'));
+
     await user.click(screen.getByText('Start My Journey'));
 
     await waitFor(() => {
-      expect(screen.getAllByText(/hello, testuser/i).length).toBeGreaterThan(0);
+      expect(document.querySelector('ion-tab-bar')).toBeTruthy();
     });
 
-    expect(document.querySelector('ion-tab-bar')).toBeTruthy();
     expect(localStorage.getItem('affirmation-flow-settings')).toContain('"onboardingComplete":true');
   });
 });

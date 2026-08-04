@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
   IonButton,
@@ -27,8 +27,9 @@ import { previewVoice, stopSpeaking } from '../services/voice';
 import { DEFAULT_SETTINGS } from '../types/settings';
 import './Onboarding.css';
 
-const STEP_TITLES = ['Welcome', 'Ready'] as const;
-const STEPS = ['setup', 'ready'] as const;
+const STEP_TITLES = ['Focus', 'Listen', 'Ready'] as const;
+const STEPS = ['focus', 'listen', 'ready'] as const;
+const MAX_FOCUS_AREAS = 2;
 
 const Onboarding: React.FC = () => {
   const history = useHistory();
@@ -43,27 +44,28 @@ const Onboarding: React.FC = () => {
   const [previewError, setPreviewError] = useState('');
 
   const voiceReady = isElevenLabsConfigured() && voiceEnabled;
+  const previewText = useMemo(
+    () => getDailyAffirmation([], focusCategories.length > 0 ? focusCategories : ['Self-Love']).text,
+    [focusCategories],
+  );
 
   const toggleCategory = (category: string) => {
-    setFocusCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category],
-    );
+    setFocusCategories((prev) => {
+      if (prev.includes(category)) {
+        return prev.filter((c) => c !== category);
+      }
+      if (prev.length >= MAX_FOCUS_AREAS) {
+        return prev;
+      }
+      return [...prev, category];
+    });
   };
 
-  const handleVoicePreview = async () => {
-    if (previewPlaying) {
-      stopSpeaking();
-      setPreviewPlaying(false);
-      return;
-    }
+  const playFirstAffirmation = async () => {
+    if (!voiceReady) return;
 
     setPreviewError('');
     setPreviewPlaying(true);
-
-    const categories = focusCategories.length > 0 ? focusCategories : ['Self-Love'];
-    const previewText = getDailyAffirmation([], categories).text;
     const previewOptions = buildVoiceOptions(DEFAULT_SETTINGS);
 
     try {
@@ -74,6 +76,16 @@ const Onboarding: React.FC = () => {
       setPreviewPlaying(false);
     }
   };
+
+  useEffect(() => {
+    if (STEPS[step] !== 'listen' || !voiceReady) return;
+    void playFirstAffirmation();
+    return () => {
+      stopSpeaking();
+      setPreviewPlaying(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- replay when entering listen step
+  }, [step, voiceReady]);
 
   const finish = async () => {
     const settings = {
@@ -124,23 +136,11 @@ const Onboarding: React.FC = () => {
           ))}
         </div>
 
-        {currentStep === 'setup' && (
+        {currentStep === 'focus' && (
           <div className="onboarding-step">
             <AppLogo size="lg" className="onboarding-logo" />
-            <h1>Welcome to AffirmEaze</h1>
-            <p>Daily affirmations with calm, natural premium voices.</p>
-            <IonItem className="onboarding-input">
-              <IonInput
-                label="Your name"
-                labelPlacement="stacked"
-                placeholder="What should we call you?"
-                value={name}
-                onIonInput={(e) => setName(e.detail.value ?? '')}
-              />
-            </IonItem>
-            <IonText color="medium">
-              <p className="time-label">What matters to you?</p>
-            </IonText>
+            <h1>What matters to you?</h1>
+            <p>Pick up to two focus areas for your daily affirmations.</p>
             <div className="category-grid">
               {CATEGORIES.map((category) => (
                 <IonItem key={category} lines="none" className="category-chip">
@@ -152,7 +152,11 @@ const Onboarding: React.FC = () => {
                 </IonItem>
               ))}
             </div>
-            <IonButton expand="block" onClick={() => setStep(1)} disabled={!name.trim() || focusCategories.length === 0}>
+            <IonButton
+              expand="block"
+              onClick={() => setStep(1)}
+              disabled={focusCategories.length === 0}
+            >
               Continue
               <IonIcon slot="end" icon={arrowForward} />
             </IonButton>
@@ -162,10 +166,51 @@ const Onboarding: React.FC = () => {
           </div>
         )}
 
+        {currentStep === 'listen' && (
+          <div className="onboarding-step onboarding-step--listen">
+            <h1>Your first affirmation</h1>
+            <p className="onboarding-preview-category">
+              {focusCategories[0] ?? 'Self-Love'}
+            </p>
+            <p className="onboarding-preview-text">{previewText}</p>
+            {voiceReady ? (
+              <>
+                <p className="onboarding-voice-note">
+                  {previewPlaying ? 'Playing…' : 'Tap below to hear it again.'}
+                </p>
+                <IonButton expand="block" fill="outline" onClick={() => void playFirstAffirmation()}>
+                  <IonIcon slot="start" icon={previewPlaying ? stopCircle : volumeHigh} />
+                  {previewPlaying ? 'Playing…' : 'Hear again'}
+                </IonButton>
+                {previewError && (
+                  <p className="onboarding-voice-note onboarding-preview-error">{previewError}</p>
+                )}
+              </>
+            ) : (
+              <p className="onboarding-voice-note">
+                Voice will be available once premium is active.
+              </p>
+            )}
+            <IonButton expand="block" onClick={() => setStep(2)}>
+              Continue
+              <IonIcon slot="end" icon={arrowForward} />
+            </IonButton>
+          </div>
+        )}
+
         {currentStep === 'ready' && (
           <div className="onboarding-step">
-            <h1>Your daily practice</h1>
-            <p>Voice and reminders — adjust anytime in Settings.</p>
+            <h1>Almost ready</h1>
+            <p>Name and reminders — adjust anytime in Settings.</p>
+            <IonItem className="onboarding-input">
+              <IonInput
+                label="Your name (optional)"
+                labelPlacement="stacked"
+                placeholder="What should we call you?"
+                value={name}
+                onIonInput={(e) => setName(e.detail.value ?? '')}
+              />
+            </IonItem>
             <IonItem lines="none">
               <IonLabel>Voice affirmations</IonLabel>
               <IonToggle
@@ -173,20 +218,6 @@ const Onboarding: React.FC = () => {
                 onIonChange={(e) => setVoiceEnabled(e.detail.checked)}
               />
             </IonItem>
-            <p className="onboarding-voice-note">
-              Spoken affirmations use calm, natural premium voices.
-            </p>
-            {voiceReady && (
-              <>
-                <IonButton expand="block" fill="outline" onClick={() => void handleVoicePreview()}>
-                  <IonIcon slot="start" icon={previewPlaying ? stopCircle : volumeHigh} />
-                  {previewPlaying ? 'Stop Preview' : 'Preview Voice'}
-                </IonButton>
-                {previewError && (
-                  <p className="onboarding-voice-note onboarding-preview-error">{previewError}</p>
-                )}
-              </>
-            )}
             <IonItem lines="none">
               <IonLabel>Daily reminder</IonLabel>
               <IonToggle
@@ -213,7 +244,7 @@ const Onboarding: React.FC = () => {
                 </p>
               </>
             )}
-            <IonButton expand="block" onClick={finish}>
+            <IonButton expand="block" onClick={() => void finish()}>
               Start My Journey
             </IonButton>
           </div>

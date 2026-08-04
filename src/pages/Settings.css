@@ -6,6 +6,29 @@
   --background: var(--ion-background-color, #f2f2f7);
 }
 
+.settings-hub-summary {
+  margin: 0.75rem 1rem 0.5rem;
+  padding: 1rem 1.15rem;
+  border-radius: 14px;
+  background: rgba(var(--ion-color-primary-rgb), 0.08);
+}
+
+.settings-hub-summary-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ion-color-primary);
+}
+
+.settings-hub-summary-detail {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ion-text-color);
+}
+
 .settings-group-label {
   margin: 1.25rem 1.5rem 0.35rem;
   font-size: 0.8rem;

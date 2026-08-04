@@ -13,8 +13,8 @@
 
 .today-streak p {
   margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .pinned-badge {
@@ -56,12 +56,20 @@
 }
 
 .affirmation-text {
-  font-size: 1.65rem;
-  line-height: 1.55;
-  font-weight: 400;
+  font-size: 1.85rem;
+  line-height: 1.5;
+  font-weight: 300;
   color: var(--ion-text-color);
   margin: 0;
   max-width: 22rem;
+}
+
+.today-session-complete {
+  margin: 1.25rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+  letter-spacing: 0.02em;
 }
 
 .repeat-hint {
@@ -77,53 +85,48 @@
 }
 
 .today-stop-inline {
-  width: 100%;
-  max-width: 22rem;
-  margin-top: 1rem;
+  display: none;
 }
 
-.today-actions-row {
+.today-primary-section {
+  padding: 0 1.5rem 0.75rem;
+}
+
+.today-primary-btn {
+  --box-shadow: 0 10px 28px rgba(var(--ion-color-primary-rgb), 0.22);
+  font-weight: 600;
+}
+
+.today-secondary-actions {
   display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 0 1.5rem 1rem;
 }
 
-.voice-btn {
+.today-secondary-btn {
   background: none;
   border: none;
-  font-size: 2rem;
+  font-size: 1.75rem;
   color: var(--ion-color-medium);
   cursor: pointer;
   padding: 0.5rem;
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
-.voice-btn.active {
-  color: var(--ion-color-primary);
-}
-
-.voice-btn:active {
-  transform: scale(1.15);
-}
-
-.favorite-btn {
-  margin-top: 0;
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: var(--ion-color-medium);
-  cursor: pointer;
-  padding: 0.5rem;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.favorite-btn.saved {
+.today-secondary-btn.saved {
   color: var(--ion-color-danger);
 }
 
-.favorite-btn:active {
-  transform: scale(1.15);
+.today-secondary-btn:active {
+  transform: scale(1.1);
+}
+
+.today-another-line-btn {
+  --color: var(--ion-color-medium);
+  font-size: 0.9rem;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .today-actions {

@@ -2,6 +2,22 @@
   --padding-bottom: 1.5rem;
 }
 
+.saved-filter-chips {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 0.25rem;
+  flex-wrap: wrap;
+}
+
+.saved-filter-chips ion-chip {
+  margin: 0;
+  cursor: pointer;
+}
+
+.affirmation-row--speaking {
+  --background: rgba(var(--ion-color-primary-rgb), 0.06);
+}
+
 .custom-add-trigger {
   padding: 0 1rem 0.75rem;
 }

@@ -64,7 +64,7 @@ const MainTabBar: React.FC = () => {
       </IonTabButton>
       <IonTabButton tab="my" href="/my">
         <IonIcon aria-hidden="true" icon={heart} />
-        <IonLabel>My</IonLabel>
+        <IonLabel>Saved</IonLabel>
       </IonTabButton>
       <IonTabButton tab="settings" href="/settings">
         <IonIcon aria-hidden="true" icon={settingsOutline} />

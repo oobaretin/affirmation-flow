@@ -31,6 +31,15 @@ export function getRemindersSummary(settings: UserSettings): string {
   return formatReminderHour(settings.notificationHour);
 }
 
+export function getHubSummary(settings: UserSettings): string {
+  return [
+    getRemindersSummary(settings),
+    formatFocusSummary(settings.focusCategories),
+    getVoiceSummary(settings),
+    getPracticeSummary(settings),
+  ].join(' · ');
+}
+
 export function formatRenewalDate(value: string | null): string {
   if (!value) return 'Active';
   const date = new Date(value);

@@ -16,11 +16,10 @@ import {
 import {
   heart,
   heartOutline,
+  pause,
   play,
   refresh,
-  settingsOutline,
   shareOutline,
-  stopCircle,
   volumeHigh,
 } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -47,12 +46,12 @@ import {
 import { consumeQueuedTodayAffirmation } from '../services/todaySelection';
 import {
   getTodayViewSession,
-  markTodayAwaitingPlay,
   markTodayPracticeStarted,
   setTodayVoicePracticeActive,
 } from '../services/todayViewSession';
 import { buildVoiceOptions } from '../services/voiceProfiles';
 import { getActiveSpeechText, isSpeaking, speakAffirmation, stopSpeaking } from '../services/voice';
+import { getTimeAwareGreeting } from '../utils/greeting';
 import './Today.css';
 
 type TodayLocationState = {
@@ -65,13 +64,15 @@ const Today: React.FC = () => {
   const { settings } = useSettings();
   const { custom } = useCustomAffirmations();
   const [affirmation, setAffirmation] = useState<Affirmation | null>(null);
-  const [speaking, setSpeaking] = useState(false);
   const [voicePracticeActive, setVoicePracticeActive] = useState(
     () => getTodayViewSession().voicePracticeActive,
   );
+  const [practiceStarted, setPracticeStarted] = useState(
+    () => !getTodayViewSession().awaitingPlay,
+  );
   const [streak, setStreak] = useState(0);
-  const [awaitingPlay, setAwaitingPlay] = useState(() => getTodayViewSession().awaitingPlay);
   const [shareToast, setShareToast] = useState('');
+  const [sessionComplete, setSessionComplete] = useState(false);
   const [generatingAffirmation, setGeneratingAffirmation] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
   const [isFirstTodayVisit] = useState(() => !getTodayViewSession().initialized);
@@ -80,20 +81,18 @@ const Today: React.FC = () => {
     isFirstTodayVisit ? undefined : 0,
   );
 
-  const greeting = settings.name ? `Hello, ${settings.name}` : 'Today';
+  const greeting = getTimeAwareGreeting(settings.name);
   const pinned = isPinnedToday(affirmation?.id ?? '');
   const voiceOptions = buildVoiceOptions(settings);
 
   const endVoicePractice = () => {
     setTodayVoicePracticeActive(false);
-    setSpeaking(false);
     setVoicePracticeActive(false);
   };
 
   const beginVoicePractice = () => {
     setTodayVoicePracticeActive(true);
     setVoicePracticeActive(true);
-    setSpeaking(true);
   };
 
   const handleStop = () => {
@@ -101,7 +100,7 @@ const Today: React.FC = () => {
     endVoicePractice();
   };
 
-  const speakDailyAffirmation = (daily: Affirmation) => {
+  const speakDailyAffirmation = (daily: Affirmation, onNaturalEnd?: () => void) => {
     if (!settings.voiceEnabled) return;
 
     stopSpeaking();
@@ -110,7 +109,10 @@ const Today: React.FC = () => {
     speakAffirmation(
       daily.text,
       settings.repeatCount,
-      () => endVoicePractice(),
+      () => {
+        endVoicePractice();
+        onNaturalEnd?.();
+      },
       unlimited,
       voiceOptions,
     ).catch(() => {
@@ -122,10 +124,13 @@ const Today: React.FC = () => {
     const practice = recordPractice();
     setStreak(practice.currentStreak);
     markTodayPracticeStarted(daily.id);
-    setAwaitingPlay(false);
+    setPracticeStarted(true);
 
     if (withVoice && settings.voiceEnabled) {
-      speakDailyAffirmation(daily);
+      speakDailyAffirmation(daily, () => {
+        setSessionComplete(true);
+        window.setTimeout(() => setSessionComplete(false), 3000);
+      });
     }
 
     try {
@@ -143,10 +148,9 @@ const Today: React.FC = () => {
 
     if (resumeVoicePractice) {
       setVoicePracticeActive(true);
-      setSpeaking(speakingNow || session.voicePracticeActive);
-      setAwaitingPlay(false);
+      setPracticeStarted(true);
     } else {
-      setAwaitingPlay(session.awaitingPlay);
+      setPracticeStarted(!session.awaitingPlay);
     }
 
     setStreak(getStreak());
@@ -160,8 +164,7 @@ const Today: React.FC = () => {
       if (shouldAutoPlay) {
         void startPractice(passed, true);
       } else {
-        markTodayAwaitingPlay(passed.id);
-        setAwaitingPlay(true);
+        setPracticeStarted(false);
       }
       history.replace('/today');
       return;
@@ -173,8 +176,7 @@ const Today: React.FC = () => {
       if (!session.initialized) {
         session.initialized = true;
         if (!resumeVoicePractice) {
-          markTodayAwaitingPlay(pinnedToday.id);
-          setAwaitingPlay(true);
+          void startPractice(pinnedToday, settings.voiceEnabled);
         }
       }
       return;
@@ -185,8 +187,7 @@ const Today: React.FC = () => {
       const daily = getDailyAffirmation(custom, settings.focusCategories);
       setAffirmation(daily);
       if (!resumeVoicePractice) {
-        markTodayAwaitingPlay(daily.id);
-        setAwaitingPlay(true);
+        void startPractice(daily, settings.voiceEnabled);
       }
     }
   });
@@ -237,24 +238,21 @@ const Today: React.FC = () => {
 
   const saved = isFavorite(affirmation.id);
 
-  const handleSpeak = async (target: Affirmation) => {
-    if (!settings.voiceEnabled) return;
-    beginVoicePractice();
-    const unlimited = settings.repeatMode === 'unlimited';
-    await speakAffirmation(
-      target.text,
-      settings.repeatCount,
-      () => endVoicePractice(),
-      unlimited,
-      voiceOptions,
-    );
-    if (!isSpeaking() && !getActiveSpeechText()) {
-      endVoicePractice();
+  const handlePrimaryAction = () => {
+    if (voicePracticeActive) {
+      handleStop();
+      return;
     }
-  };
 
-  const handleBeginPractice = () => {
-    void startPractice(affirmation, true);
+    if (settings.voiceEnabled) {
+      speakDailyAffirmation(affirmation, () => {
+        setSessionComplete(true);
+        window.setTimeout(() => setSessionComplete(false), 3000);
+      });
+      return;
+    }
+
+    void startPractice(affirmation, false);
   };
 
   const handleNewAffirmation = async () => {
@@ -262,17 +260,16 @@ const Today: React.FC = () => {
 
     handleStop();
     setGeneratingAffirmation(true);
+    setSessionComplete(false);
 
     try {
       const useAi = isOpenAiConfigured();
-
       const next = useAi
         ? await generateNextAffirmation(settings.focusCategories)
         : getRandomAffirmation(custom, settings.focusCategories);
 
-      markTodayAwaitingPlay(next.id);
       setAffirmation(next);
-      setAwaitingPlay(true);
+      void startPractice(next, settings.voiceEnabled);
 
       try {
         await Haptics.impact({ style: ImpactStyle.Light });
@@ -295,14 +292,6 @@ const Today: React.FC = () => {
     }
   };
 
-  const handleVoiceToggle = async () => {
-    if (voicePracticeActive) {
-      handleStop();
-      return;
-    }
-    await handleSpeak(affirmation);
-  };
-
   const handleShare = async () => {
     const shared = await shareAffirmation(affirmation.text);
     if (shared) {
@@ -312,15 +301,30 @@ const Today: React.FC = () => {
   };
 
   const streakLabel = streak > 0
-    ? `${streak} day streak 🔥`
-    : 'Start your streak today ✨';
+    ? `${streak} day streak`
+    : 'Start your streak today';
 
   const practiceHint = getTodayPracticeHint(
     settings.voiceEnabled,
     settings.repeatMode,
     settings.repeatCount,
   );
-  const showStopButton = settings.voiceEnabled && voicePracticeActive;
+
+  const primaryLabel = voicePracticeActive
+    ? 'Pause'
+    : settings.voiceEnabled
+      ? practiceStarted
+        ? 'Listen again'
+        : 'Listen now'
+      : practiceStarted
+        ? 'Practice again'
+        : 'Begin today';
+
+  const primaryIcon = voicePracticeActive
+    ? pause
+    : settings.voiceEnabled
+      ? volumeHigh
+      : play;
 
   return (
     <IonPage>
@@ -330,11 +334,6 @@ const Today: React.FC = () => {
             <AppLogo size="xs" />
           </IonButtons>
           <IonTitle>{greeting}</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={() => history.push('/settings')} aria-label="Open settings">
-              <IonIcon icon={settingsOutline} />
-            </IonButton>
-          </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen className="today-content">
@@ -344,11 +343,13 @@ const Today: React.FC = () => {
           </IonToolbar>
         </IonHeader>
 
-        <div className="today-streak">
-          <IonText color="primary">
-            <p>{streakLabel}</p>
-          </IonText>
-        </div>
+        {!sessionComplete && (
+          <div className="today-streak">
+            <IonText color="medium">
+              <p>{streakLabel}</p>
+            </IonText>
+          </div>
+        )}
 
         <div className={`affirmation-card${voicePracticeActive ? ' affirmation-card--practice-active' : ''}`}>
           <p className="affirmation-category">
@@ -356,62 +357,54 @@ const Today: React.FC = () => {
             {pinned && <span className="pinned-badge"> · Pinned today</span>}
           </p>
           <p className="affirmation-text">{affirmation.text}</p>
-          {practiceHint && (
-            <p className={`repeat-hint${voicePracticeActive ? ' repeat-hint--active' : ''}`}>
-              {practiceHint}
-            </p>
+          {sessionComplete && (
+            <p className="today-session-complete">Done for today</p>
           )}
-          {showStopButton && (
-            <div className="today-stop-inline">
-              <IonButton expand="block" color="danger" onClick={handleStop}>
-                <IonIcon slot="start" icon={stopCircle} />
-                Stop Affirmation
-              </IonButton>
-            </div>
+          {practiceHint && voicePracticeActive && (
+            <p className="repeat-hint repeat-hint--active">{practiceHint}</p>
           )}
-          {!awaitingPlay && (
-            <div className="today-actions-row">
-              <button
-                className={`favorite-btn ${saved ? 'saved' : ''}`}
-                onClick={handleToggleFavorite}
-                aria-label={saved ? 'Remove from favorites' : 'Add to favorites'}
-              >
-                <IonIcon icon={saved ? heart : heartOutline} />
-              </button>
-              <button
-                className="voice-btn"
-                onClick={handleShare}
-                aria-label="Share affirmation"
-              >
-                <IonIcon icon={shareOutline} />
-              </button>
-              {settings.voiceEnabled && (
-                <button
-                  className={`voice-btn ${voicePracticeActive ? 'active' : ''}`}
-                  onClick={handleVoiceToggle}
-                  aria-label={voicePracticeActive ? 'Stop speaking' : 'Speak affirmation'}
-                >
-                  <IonIcon icon={voicePracticeActive ? stopCircle : volumeHigh} />
-                </button>
-              )}
-            </div>
+          {practiceHint && !settings.voiceEnabled && (
+            <p className="repeat-hint">{practiceHint}</p>
           )}
           {shareToast && <p className="today-share-toast">{shareToast}</p>}
         </div>
 
-        {awaitingPlay && (
-          <div className="today-begin-section">
-            <IonButton expand="block" className="today-begin-btn" onClick={handleBeginPractice}>
-              <IonIcon slot="start" icon={play} />
-              {settings.voiceEnabled ? 'Listen now' : 'Begin today'}
-            </IonButton>
-          </div>
-        )}
+        <div className="today-primary-section">
+          <IonButton
+            expand="block"
+            className="today-primary-btn"
+            onClick={handlePrimaryAction}
+          >
+            <IonIcon slot="start" icon={primaryIcon} />
+            {primaryLabel}
+          </IonButton>
+        </div>
+
+        <div className="today-secondary-actions">
+          <button
+            type="button"
+            className={`today-secondary-btn ${saved ? 'saved' : ''}`}
+            onClick={() => void handleToggleFavorite()}
+            aria-label={saved ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <IonIcon icon={saved ? heart : heartOutline} />
+          </button>
+          <button
+            type="button"
+            className="today-secondary-btn"
+            onClick={() => void handleShare()}
+            aria-label="Share affirmation"
+          >
+            <IonIcon icon={shareOutline} />
+          </button>
+        </div>
 
         <div className="today-actions">
           <IonButton
             expand="block"
-            fill="outline"
+            fill="clear"
+            size="small"
+            className="today-another-line-btn"
             disabled={generatingAffirmation}
             onClick={() => void handleNewAffirmation()}
           >
@@ -420,7 +413,7 @@ const Today: React.FC = () => {
             ) : (
               <IonIcon slot="start" icon={refresh} />
             )}
-            {generatingAffirmation ? 'Generating…' : 'New Affirmation'}
+            {generatingAffirmation ? 'Generating…' : 'Another line'}
           </IonButton>
         </div>
       </IonContent>

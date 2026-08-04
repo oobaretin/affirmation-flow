@@ -26,9 +26,8 @@ import { APP_NAME, APP_VERSION, PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '../con
 import {
   formatFocusSummary,
   formatRenewalDate,
+  getHubSummary,
   getPracticeSummary,
-  getRemindersSummary,
-  getVoiceSummary,
 } from './settings/settingsSummaries';
 import './Settings.css';
 
@@ -86,6 +85,11 @@ const Settings: React.FC = () => {
           </IonToolbar>
         </IonHeader>
 
+        <div className="settings-hub-summary">
+          <p className="settings-hub-summary-label">Your practice</p>
+          <p className="settings-hub-summary-detail">{getHubSummary(settings)}</p>
+        </div>
+
         <p className="settings-group-label">Profile</p>
         <IonList inset className="settings-menu-list">
           <IonItem lines="full" className="settings-name-item">
@@ -100,10 +104,12 @@ const Settings: React.FC = () => {
 
         <p className="settings-group-label">Preferences</p>
         <IonList inset className="settings-menu-list">
-          <SettingsRow title="Subscription" detail={subscriptionSummary} path="/settings/subscription" />
-          <SettingsRow title="Practice" detail={getPracticeSummary(settings)} path="/settings/practice" />
-          <SettingsRow title="Voice" detail={getVoiceSummary(settings)} path="/settings/voice" />
-          <SettingsRow title="Reminders" detail={getRemindersSummary(settings)} path="/settings/reminders" />
+          <SettingsRow title="Account" detail={subscriptionSummary} path="/settings/subscription" />
+          <SettingsRow
+            title="Your Practice"
+            detail={`${getPracticeSummary(settings)} · Voice & reminders`}
+            path="/settings/practice"
+          />
           <SettingsRow title="Focus Areas" detail={formatFocusSummary(settings.focusCategories)} path="/settings/focus" />
         </IonList>
 

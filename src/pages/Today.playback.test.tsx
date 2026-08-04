@@ -75,37 +75,41 @@ describe('Today playback UI', () => {
     resetTodayViewSession();
   });
 
-  it('shows listen CTA without repeat hint when voice is enabled', async () => {
-    renderToday();
-    expect(await screen.findByText('Listen now')).toBeInTheDocument();
-    expect(screen.queryByText(/Repeat to yourself/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Speaks/i)).not.toBeInTheDocument();
-    expect(screen.queryByText('Stop Affirmation')).not.toBeInTheDocument();
-  });
-
-  it('shows stop while speech is in progress', async () => {
+  it('auto-starts voice on first visit', async () => {
     vi.mocked(voice.speakAffirmation).mockImplementation(
       () => new Promise<void>(() => {
         /* never resolves — simulates in-progress playback */
       }),
     );
 
-    const user = userEvent.setup();
     renderToday();
-    await user.click(await screen.findByText('Listen now'));
 
     await waitFor(() => {
-      expect(screen.getByText('Stop Affirmation')).toBeInTheDocument();
+      expect(voice.speakAffirmation).toHaveBeenCalled();
     });
+    expect(await screen.findByText('Pause')).toBeInTheDocument();
   });
 
-  it('shows silent practice hint when voice is off', async () => {
+  it('shows pause while speech is in progress', async () => {
+    vi.mocked(voice.speakAffirmation).mockImplementation(
+      () => new Promise<void>(() => {
+        /* never resolves */
+      }),
+    );
+
+    renderToday();
+
+    expect(await screen.findByText('Pause')).toBeInTheDocument();
+    expect(screen.queryByText(/Repeat to yourself/i)).not.toBeInTheDocument();
+  });
+
+  it('shows practice again when voice is off after auto-start', async () => {
     renderToday(false);
-    expect(await screen.findByText(/^Begin today$/i)).toBeInTheDocument();
+    expect(await screen.findByText('Practice again')).toBeInTheDocument();
     expect(screen.getByText('Repeat to yourself 3x')).toBeInTheDocument();
   });
 
-  it('hides stop after speech completes', async () => {
+  it('shows done message after speech completes', async () => {
     vi.mocked(voice.speakAffirmation).mockImplementation(
       (_text, _count, onComplete) => {
         onComplete?.();
@@ -113,12 +117,24 @@ describe('Today playback UI', () => {
       },
     );
 
+    renderToday();
+
+    expect(await screen.findByText('Done for today')).toBeInTheDocument();
+    expect(await screen.findByText('Listen again')).toBeInTheDocument();
+  });
+
+  it('pauses when the primary button is tapped during playback', async () => {
+    vi.mocked(voice.speakAffirmation).mockImplementation(
+      () => new Promise<void>(() => {
+        /* never resolves */
+      }),
+    );
+    const stopSpy = vi.spyOn(voice, 'stopSpeaking');
+
     const user = userEvent.setup();
     renderToday();
-    await user.click(await screen.findByText('Listen now'));
+    await user.click(await screen.findByText('Pause'));
 
-    await waitFor(() => {
-      expect(screen.queryByText('Stop Affirmation')).not.toBeInTheDocument();
-    });
+    expect(stopSpy).toHaveBeenCalled();
   });
 });

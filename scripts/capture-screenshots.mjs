@@ -189,7 +189,7 @@ async function runCaptureSet({ subscriptionBypass, includePaywall, includeApp })
       });
 
       await capture(page, '02-today.png', '/today', 'Hello, Alex');
-      await capture(page, '03-my-affirmations.png', '/my', 'My Affirmations');
+      await capture(page, '03-saved.png', '/my', 'Saved');
       await captureSettingsVoice(page);
       await captureOnboarding(page);
     }

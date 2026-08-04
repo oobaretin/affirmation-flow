@@ -90,3 +90,26 @@
 .onboarding-preview-error {
   color: var(--ion-color-danger);
 }
+
+.onboarding-step--listen {
+  padding-top: 0.5rem;
+}
+
+.onboarding-preview-category {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ion-color-primary);
+  margin: 0 0 1rem;
+}
+
+.onboarding-preview-text {
+  font-size: 1.5rem;
+  line-height: 1.5;
+  font-weight: 300;
+  color: var(--ion-text-color);
+  margin: 0 0 1.5rem;
+  max-width: 20rem;
+  margin-inline: auto;
+}

@@ -48,12 +48,13 @@ describe('Settings layout', () => {
     );
 
     expect(screen.getByText('Preferences')).toBeInTheDocument();
+    expect(screen.getByText('Your practice')).toBeInTheDocument();
     expect(container.querySelector('ion-input[label="Your name"]')).toBeTruthy();
-    expect(container.querySelectorAll('.settings-menu-item')).toHaveLength(8);
-    expect(screen.getByText('Advanced')).toBeInTheDocument();
-    expect(screen.getByText('Redo Onboarding')).toBeInTheDocument();
-    expect(screen.queryByText('Your Practice')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.settings-menu-item')).toHaveLength(6);
+    expect(screen.getByText('Your Practice')).toBeInTheDocument();
     expect(screen.queryByText('Preview Voice')).not.toBeInTheDocument();
     expect(screen.queryByText('Lock App')).not.toBeInTheDocument();
+    expect(screen.getByText('Advanced')).toBeInTheDocument();
+    expect(screen.getByText('Redo Onboarding')).toBeInTheDocument();
   });
 });

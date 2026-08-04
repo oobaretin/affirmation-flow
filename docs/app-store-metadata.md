@@ -22,16 +22,16 @@ Start your day with calm, spoken affirmations. Personalize your focus, build str
 
 AffirmEaze is your daily space for calm self-belief.
 
-Build a gentle affirmation practice with natural premium voices, personalized focus areas, favorites, streaks, and a growing library — including AI-assisted custom affirmations.
+Build a gentle daily practice with natural premium voices, personalized focus areas, saved favorites, custom affirmations, and streak tracking.
 
 **What’s included in Premium:**
 
 • Natural premium voices for every spoken affirmation  
-• Daily affirmation tailored to your focus areas  
+• One daily affirmation tailored to your focus areas  
 • Mantra-style repeats with calm delivery  
-• Library, search, favorites, and streak tracking  
+• Saved favorites and custom affirmations  
 • Daily reminders on your schedule  
-• AI affirmation generator  
+• Fresh lines with "Another line" on Today  
 • Everything stored privately on your device  
 
 AffirmEaze is designed to feel soft and unhurried — like a quiet moment before the day begins.
