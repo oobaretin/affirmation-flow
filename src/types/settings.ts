@@ -44,3 +44,15 @@ export function formatRepeatLabel(mode: RepeatMode, count: number): string {
   if (mode === 'unlimited') return 'Unlimited';
   return `${count}x`;
 }
+
+/** Silent-practice direction on Today. Voice-on mode is listen-only — no repeat copy shown. */
+export function getTodayPracticeHint(
+  voiceEnabled: boolean,
+  repeatMode: RepeatMode,
+  repeatCount: number,
+): string | null {
+  if (voiceEnabled) return null;
+
+  if (repeatMode === 'unlimited') return 'Repeat at your own pace';
+  return `Repeat to yourself ${formatRepeatLabel(repeatMode, repeatCount)}`;
+}

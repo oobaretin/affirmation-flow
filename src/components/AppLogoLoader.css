@@ -1,0 +1,119 @@
+.app-logo-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  min-height: 100%;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.app-logo-loader__stage {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 220px;
+}
+
+.app-logo-loader__aura {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.app-logo-loader__halo {
+  position: absolute;
+  border-radius: 28%;
+  background: radial-gradient(
+    circle,
+    rgba(var(--ion-color-primary-rgb), 0.34) 0%,
+    rgba(var(--ion-color-primary-rgb), 0.14) 45%,
+    transparent 72%
+  );
+  animation: app-logo-loader-halo 6.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.app-logo-loader__halo--near {
+  width: 150px;
+  height: 150px;
+}
+
+.app-logo-loader__halo--far {
+  width: 210px;
+  height: 210px;
+  animation-delay: -3.25s;
+}
+
+.app-logo-loader__mark {
+  position: relative;
+  z-index: 1;
+  animation: app-logo-loader-breathe 6.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.app-logo-loader__mark .app-logo {
+  animation: app-logo-loader-glow 6.5s ease-in-out infinite;
+  will-change: box-shadow, transform;
+}
+
+.app-logo-loader__message {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+  letter-spacing: 0.02em;
+}
+
+@keyframes app-logo-loader-breathe {
+  0%,
+  100% {
+    transform: scale(0.94);
+  }
+
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes app-logo-loader-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(var(--ion-color-primary-rgb), 0.12),
+      0 10px 26px rgba(var(--ion-color-primary-rgb), 0.18);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(var(--ion-color-primary-rgb), 0.22),
+      0 16px 40px rgba(var(--ion-color-primary-rgb), 0.38),
+      0 0 56px rgba(var(--ion-color-primary-rgb), 0.16);
+  }
+}
+
+@keyframes app-logo-loader-halo {
+  0%,
+  100% {
+    transform: scale(0.88);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: scale(1.12);
+    opacity: 0.95;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-logo-loader__mark,
+  .app-logo-loader__mark .app-logo,
+  .app-logo-loader__halo {
+    animation: none;
+  }
+}

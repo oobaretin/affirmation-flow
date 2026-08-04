@@ -5,9 +5,10 @@ import {
   IonContent,
   IonIcon,
   IonPage,
-  IonSpinner,
   IonText,
 } from '@ionic/react';
+import AppLogoLoader from '../components/AppLogoLoader';
+import { useMinimumLoaderDuration } from '../hooks/useMinimumLoaderDuration';
 import { checkmarkCircle, stopCircle, volumeHigh } from 'ionicons/icons';
 import AppLogo from '../components/AppLogo';
 import { PRIVACY_POLICY_URL } from '../constants/app';
@@ -104,6 +105,17 @@ const Paywall: React.FC = () => {
   const yearlyTrialNote = formatPlanTrialNote('yearly', offering.yearly);
   const subscriptionLegal = buildSubscriptionLegal(selectedPlan, selectedPrice);
   const greeting = settings.name ? `${settings.name}, listen to today's affirmation` : 'Listen to today\'s affirmation';
+  const showPaywallLoader = useMinimumLoaderDuration(loading);
+
+  if (showPaywallLoader) {
+    return (
+      <IonPage>
+        <IonContent fullscreen className="paywall-content">
+          <AppLogoLoader />
+        </IonContent>
+      </IonPage>
+    );
+  }
 
   return (
     <IonPage>
@@ -152,14 +164,7 @@ const Paywall: React.FC = () => {
             ))}
           </ul>
 
-          {loading ? (
-            <div className="paywall-loading">
-              <IonSpinner name="crescent" />
-              <p>Loading plans...</p>
-            </div>
-          ) : (
-            <>
-              <div className="paywall-plans">
+          <div className="paywall-plans">
                 <button
                   type="button"
                   className={`paywall-plan ${selectedPlan === 'yearly' ? 'selected' : ''}`}
@@ -229,11 +234,9 @@ const Paywall: React.FC = () => {
                 Restore Purchases
               </IonButton>
 
-              <IonButton expand="block" fill="clear" onClick={() => openExternalUrl(PRIVACY_POLICY_URL)}>
-                Privacy Policy
-              </IonButton>
-            </>
-          )}
+          <IonButton expand="block" fill="clear" onClick={() => openExternalUrl(PRIVACY_POLICY_URL)}>
+            Privacy Policy
+          </IonButton>
 
           <p className="paywall-legal">{subscriptionLegal}</p>
         </div>

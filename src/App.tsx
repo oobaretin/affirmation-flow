@@ -1,30 +1,38 @@
 import { Redirect, Route } from 'react-router-dom';
+import React from 'react';
 import {
   IonApp,
+  IonContent,
   IonIcon,
   IonLabel,
+  IonPage,
   IonRouterOutlet,
   IonTabBar,
   IonTabButton,
   IonTabs,
   setupIonicReact
 } from '@ionic/react';
+import AppLogoLoader from './components/AppLogoLoader';
+import { useMinimumLoaderDuration } from './hooks/useMinimumLoaderDuration';
 import { IonReactRouter } from '@ionic/react-router';
-import { heart, library, settingsOutline, sunny } from 'ionicons/icons';
+import { settingsOutline, sunny, heart } from 'ionicons/icons';
 import Today from './pages/Today';
-import Library from './pages/Library';
-import Favorites from './pages/Favorites';
+import MyAffirmations from './pages/MyAffirmations';
 import Settings from './pages/Settings';
+import SettingsSubscription from './pages/settings/SettingsSubscription';
+import SettingsPractice from './pages/settings/SettingsPractice';
+import SettingsVoice from './pages/settings/SettingsVoice';
+import SettingsReminders from './pages/settings/SettingsReminders';
+import SettingsFocus from './pages/settings/SettingsFocus';
 import Onboarding from './pages/Onboarding';
-import WelcomeBack from './pages/WelcomeBack';
-import SignedOut from './pages/SignedOut';
 import Privacy from './pages/Privacy';
 import Paywall from './pages/Paywall';
 import { useSettings, SettingsProvider } from './hooks/useSettings';
 import { CustomAffirmationsProvider } from './hooks/useCustomAffirmations';
 import { FavoritesProvider } from './hooks/useFavorites';
 import { SubscriptionProvider, useSubscription } from './hooks/useSubscription';
-import { getLoggedOutDefaultRoute, hasExplicitLogout } from './services/session';
+import { useKeyboardVisible } from './hooks/useKeyboardVisible';
+import './App.css';
 
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';
@@ -42,12 +50,39 @@ import './theme/variables.css';
 
 setupIonicReact();
 
+const MainTabBar: React.FC = () => {
+  const keyboardVisible = useKeyboardVisible();
+
+  return (
+    <IonTabBar
+      slot="bottom"
+      className={keyboardVisible ? 'tab-bar-keyboard-hidden' : undefined}
+    >
+      <IonTabButton tab="today" href="/today">
+        <IonIcon aria-hidden="true" icon={sunny} />
+        <IonLabel>Today</IonLabel>
+      </IonTabButton>
+      <IonTabButton tab="my" href="/my">
+        <IonIcon aria-hidden="true" icon={heart} />
+        <IonLabel>My</IonLabel>
+      </IonTabButton>
+      <IonTabButton tab="settings" href="/settings">
+        <IonIcon aria-hidden="true" icon={settingsOutline} />
+        <IonLabel>Settings</IonLabel>
+      </IonTabButton>
+    </IonTabBar>
+  );
+};
+
 const AppRoutes: React.FC = () => {
   const { settings } = useSettings();
   const { loading: subscriptionLoading, isSubscribed } = useSubscription();
+  const showBootLoader = useMinimumLoaderDuration(subscriptionLoading);
+
+  let content: React.ReactNode;
 
   if (!settings.onboardingComplete) {
-    return (
+    content = (
       <IonRouterOutlet>
         <Route exact path="/onboarding">
           <Onboarding />
@@ -63,14 +98,16 @@ const AppRoutes: React.FC = () => {
         </Route>
       </IonRouterOutlet>
     );
-  }
-
-  if (settings.onboardingComplete && subscriptionLoading) {
-    return null;
-  }
-
-  if (!isSubscribed) {
-    return (
+  } else if (settings.onboardingComplete && showBootLoader) {
+    content = (
+      <IonPage>
+        <IonContent fullscreen>
+          <AppLogoLoader />
+        </IonContent>
+      </IonPage>
+    );
+  } else if (!isSubscribed) {
+    content = (
       <IonRouterOutlet>
         <Route exact path="/paywall">
           <Paywall />
@@ -86,73 +123,50 @@ const AppRoutes: React.FC = () => {
         </Route>
       </IonRouterOutlet>
     );
-  }
-
-  if (!settings.isLoggedIn) {
-    const defaultRoute = getLoggedOutDefaultRoute(hasExplicitLogout());
-    return (
-      <IonRouterOutlet>
-        <Route exact path="/signed-out">
-          <SignedOut />
-        </Route>
-        <Route exact path="/welcome">
-          <WelcomeBack />
-        </Route>
-        <Route exact path="/">
-          <Redirect to={defaultRoute} />
-        </Route>
-        <Route>
-          <Redirect to={defaultRoute} />
-        </Route>
-      </IonRouterOutlet>
+  } else {
+    content = (
+      <IonTabs>
+        <IonRouterOutlet>
+          <Route exact path="/today">
+            <Today />
+          </Route>
+          <Route exact path="/my">
+            <MyAffirmations />
+          </Route>
+          <Route exact path="/settings">
+            <Settings />
+          </Route>
+          <Route exact path="/settings/subscription">
+            <SettingsSubscription />
+          </Route>
+          <Route exact path="/settings/practice">
+            <SettingsPractice />
+          </Route>
+          <Route exact path="/settings/voice">
+            <SettingsVoice />
+          </Route>
+          <Route exact path="/settings/reminders">
+            <SettingsReminders />
+          </Route>
+          <Route exact path="/settings/focus">
+            <SettingsFocus />
+          </Route>
+          <Route exact path="/privacy">
+            <Privacy />
+          </Route>
+          <Route exact path="/onboarding">
+            <Redirect to="/today" />
+          </Route>
+          <Route exact path="/">
+            <Redirect to="/today" />
+          </Route>
+        </IonRouterOutlet>
+        <MainTabBar />
+      </IonTabs>
     );
   }
 
-  return (
-    <IonTabs>
-      <IonRouterOutlet>
-        <Route exact path="/today">
-          <Today />
-        </Route>
-        <Route exact path="/library">
-          <Library />
-        </Route>
-        <Route path="/favorites">
-          <Favorites />
-        </Route>
-        <Route exact path="/settings">
-          <Settings />
-        </Route>
-        <Route exact path="/privacy">
-          <Privacy />
-        </Route>
-        <Route exact path="/onboarding">
-          <Redirect to="/today" />
-        </Route>
-        <Route exact path="/">
-          <Redirect to="/today" />
-        </Route>
-      </IonRouterOutlet>
-      <IonTabBar slot="bottom">
-        <IonTabButton tab="today" href="/today">
-          <IonIcon aria-hidden="true" icon={sunny} />
-          <IonLabel>Today</IonLabel>
-        </IonTabButton>
-        <IonTabButton tab="library" href="/library">
-          <IonIcon aria-hidden="true" icon={library} />
-          <IonLabel>Library</IonLabel>
-        </IonTabButton>
-        <IonTabButton tab="favorites" href="/favorites">
-          <IonIcon aria-hidden="true" icon={heart} />
-          <IonLabel>Favorites</IonLabel>
-        </IonTabButton>
-        <IonTabButton tab="settings" href="/settings">
-          <IonIcon aria-hidden="true" icon={settingsOutline} />
-          <IonLabel>Settings</IonLabel>
-        </IonTabButton>
-      </IonTabBar>
-    </IonTabs>
-  );
+  return content;
 };
 
 const App: React.FC = () => (

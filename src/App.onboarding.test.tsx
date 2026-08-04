@@ -3,6 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import App from './App';
 
+vi.mock('./hooks/useMinimumLoaderDuration', () => ({
+  useMinimumLoaderDuration: (isLoading: boolean) => isLoading,
+  LOADER_MIN_DURATION_MS: 0,
+}));
+
 vi.mock('@capacitor/local-notifications', () => ({
   LocalNotifications: {
     requestPermissions: vi.fn().mockResolvedValue({ display: 'granted' }),
@@ -32,7 +37,6 @@ describe('App onboarding flow', () => {
     const focusCheckbox = document.querySelector('ion-checkbox');
     expect(focusCheckbox).toBeTruthy();
     await user.click(focusCheckbox!);
-    await user.click(screen.getByText('Continue'));
     await user.click(screen.getByText('Continue'));
 
     await user.click(screen.getByText('Start My Journey'));

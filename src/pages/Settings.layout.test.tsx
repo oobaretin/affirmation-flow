@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 import Settings from './Settings';
 import { SettingsProvider } from '../hooks/useSettings';
@@ -8,19 +9,6 @@ import { SubscriptionProvider } from '../hooks/useSubscription';
 
 vi.mock('../services/notifications', () => ({
   scheduleDailyNotification: vi.fn(),
-}));
-
-vi.mock('../services/elevenLabs', () => ({
-  isElevenLabsConfigured: () => true,
-  listElevenLabsVoices: vi.fn().mockResolvedValue([]),
-  getElevenLabsSubscription: vi.fn().mockResolvedValue(null),
-  filterVoicesForApiAccess: (voices: unknown[]) => voices,
-  pickDefaultApiVoice: (_voices: unknown[], _subscription: unknown, currentId: string) => currentId,
-  getLastPremiumVoiceError: () => null,
-}));
-
-vi.mock('react-router-dom', () => ({
-  useHistory: () => ({ replace: vi.fn(), push: vi.fn() }),
 }));
 
 describe('Settings layout', () => {
@@ -34,6 +22,8 @@ describe('Settings layout', () => {
         repeatMode: 'fixed',
         repeatCount: 3,
         voiceEnabled: true,
+        voiceStyle: 'soothing',
+        elevenLabsVoiceId: '45UYeUCUrGxt4rWuj2Ir',
         notificationsEnabled: true,
         notificationHour: 8,
         notificationMinute: 0,
@@ -42,23 +32,28 @@ describe('Settings layout', () => {
     );
   });
 
-  it('renders primary sections with advanced actions tucked away', () => {
-    render(
-      <SettingsProvider>
-        <CustomAffirmationsProvider>
-          <FavoritesProvider>
-            <SubscriptionProvider>
-              <Settings />
-            </SubscriptionProvider>
-          </FavoritesProvider>
-        </CustomAffirmationsProvider>
-      </SettingsProvider>,
+  it('renders a settings hub with drill-in rows and advanced actions tucked away', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/settings']}>
+        <SettingsProvider>
+          <CustomAffirmationsProvider>
+            <FavoritesProvider>
+              <SubscriptionProvider>
+                <Settings />
+              </SubscriptionProvider>
+            </FavoritesProvider>
+          </CustomAffirmationsProvider>
+        </SettingsProvider>
+      </MemoryRouter>,
     );
-    expect(screen.getByText('Account')).toBeInTheDocument();
-    expect(screen.getByText('Your Practice')).toBeInTheDocument();
-    expect(screen.getByText('Focus Areas')).toBeInTheDocument();
+
+    expect(screen.getByText('Preferences')).toBeInTheDocument();
+    expect(container.querySelector('ion-input[label="Your name"]')).toBeTruthy();
+    expect(container.querySelectorAll('.settings-menu-item')).toHaveLength(8);
     expect(screen.getByText('Advanced')).toBeInTheDocument();
-    expect(screen.getByText('Lock App')).toBeInTheDocument();
-    expect(screen.queryByText('This Device')).not.toBeInTheDocument();
+    expect(screen.getByText('Redo Onboarding')).toBeInTheDocument();
+    expect(screen.queryByText('Your Practice')).not.toBeInTheDocument();
+    expect(screen.queryByText('Preview Voice')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lock App')).not.toBeInTheDocument();
   });
 });

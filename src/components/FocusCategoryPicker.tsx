@@ -13,9 +13,14 @@ import './FocusCategoryPicker.css';
 type FocusCategoryPickerProps = {
   selected: string[];
   onChange: (categories: string[]) => void;
+  variant?: 'accordion' | 'inline';
 };
 
-const FocusCategoryPicker: React.FC<FocusCategoryPickerProps> = ({ selected, onChange }) => {
+const FocusCategoryPicker: React.FC<FocusCategoryPickerProps> = ({
+  selected,
+  onChange,
+  variant = 'accordion',
+}) => {
   const [expanded, setExpanded] = useState<string | undefined>();
 
   const toggleCategory = (category: string) => {
@@ -33,6 +38,27 @@ const FocusCategoryPicker: React.FC<FocusCategoryPickerProps> = ({ selected, onC
         ? 'All areas'
         : `${selected.length} selected`;
 
+  const picker = (
+    <div className="focus-category-picker">
+      <p className="focus-category-hint">
+        Your daily affirmation prefers these categories
+      </p>
+      {CATEGORIES.map((category) => (
+        <IonItem key={category} lines="none" className="category-chip">
+          <IonCheckbox
+            checked={selected.includes(category)}
+            onIonChange={() => toggleCategory(category)}
+          />
+          <IonLabel>{category}</IonLabel>
+        </IonItem>
+      ))}
+    </div>
+  );
+
+  if (variant === 'inline') {
+    return picker;
+  }
+
   return (
     <IonAccordionGroup
       className="focus-category-accordion"
@@ -48,20 +74,7 @@ const FocusCategoryPicker: React.FC<FocusCategoryPickerProps> = ({ selected, onC
             <p className="focus-category-summary">{summary}</p>
           </IonLabel>
         </IonItem>
-        <div slot="content" className="focus-category-picker">
-          <p className="focus-category-hint">
-            Your daily affirmation prefers these categories
-          </p>
-          {CATEGORIES.map((category) => (
-            <IonItem key={category} lines="none" className="category-chip">
-              <IonCheckbox
-                checked={selected.includes(category)}
-                onIonChange={() => toggleCategory(category)}
-              />
-              <IonLabel>{category}</IonLabel>
-            </IonItem>
-          ))}
-        </div>
+        <div slot="content">{picker}</div>
       </IonAccordion>
     </IonAccordionGroup>
   );

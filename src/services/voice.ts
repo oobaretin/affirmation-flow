@@ -9,6 +9,8 @@ import {
   setLastPremiumVoiceError,
   synthesizeElevenLabsSpeech,
 } from './elevenLabs';
+import { Capacitor } from '@capacitor/core';
+import { Keyboard } from '@capacitor/keyboard';
 
 let activeUtterances = 0;
 let unlimitedLoop = false;
@@ -16,6 +18,8 @@ let activeText: string | null = null;
 let activeAudio: HTMLAudioElement | null = null;
 let elevenLabsAbort: AbortController | null = null;
 let playbackCancelled = false;
+let keyboardInterruptActive = false;
+let keyboardGuardInitialized = false;
 
 function stopAudioPlayback() {
   playbackCancelled = true;
@@ -40,6 +44,48 @@ export function getActiveSpeechText(): string | null {
   return activeText;
 }
 
+export function resumeSpeakingIfInterrupted(): void {
+  if (playbackCancelled || !activeAudio || activeAudio.ended) return;
+
+  if (!activeAudio.paused) return;
+
+  void activeAudio.play().catch(() => {});
+}
+
+export function initVoiceKeyboardGuard(): void {
+  if (keyboardGuardInitialized || !Capacitor.isNativePlatform()) return;
+  keyboardGuardInitialized = true;
+
+  void Keyboard.addListener('keyboardWillShow', () => {
+    keyboardInterruptActive = true;
+    window.setTimeout(() => resumeSpeakingIfInterrupted(), 50);
+  });
+
+  void Keyboard.addListener('keyboardDidShow', () => {
+    window.setTimeout(() => resumeSpeakingIfInterrupted(), 100);
+  });
+
+  void Keyboard.addListener('keyboardWillHide', () => {
+    keyboardInterruptActive = false;
+  });
+}
+
+function attachKeyboardResumeHandler(audio: HTMLAudioElement): () => void {
+  const handlePause = () => {
+    if (playbackCancelled || audio.ended) return;
+    if (!keyboardInterruptActive && document.activeElement?.tagName !== 'TEXTAREA') return;
+    window.setTimeout(() => {
+      if (playbackCancelled || activeAudio !== audio || audio.ended) return;
+      if (audio.paused) {
+        resumeSpeakingIfInterrupted();
+      }
+    }, 50);
+  };
+
+  audio.addEventListener('pause', handlePause);
+  return () => audio.removeEventListener('pause', handlePause);
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
@@ -55,13 +101,20 @@ function playAudioUrl(url: string, volume: number): Promise<void> {
     audio.setAttribute('playsinline', 'true');
     audio.setAttribute('webkit-playsinline', 'true');
 
-    audio.onended = () => {
+    const detachPauseHandler = attachKeyboardResumeHandler(audio);
+
+    const finish = () => {
+      detachPauseHandler();
       if (activeAudio === audio) activeAudio = null;
+    };
+
+    audio.onended = () => {
+      finish();
       resolve();
     };
 
     audio.onerror = () => {
-      if (activeAudio === audio) activeAudio = null;
+      finish();
       if (playbackCancelled) {
         resolve();
         return;
@@ -70,6 +123,7 @@ function playAudioUrl(url: string, volume: number): Promise<void> {
     };
 
     void audio.play().catch((error: unknown) => {
+      finish();
       if (playbackCancelled) {
         resolve();
         return;
@@ -183,7 +237,11 @@ export function speakAffirmation(
 }
 
 export function isSpeaking(): boolean {
-  return activeAudio != null && !activeAudio.paused && !activeAudio.ended;
+  if (playbackCancelled) return false;
+  if (activeAudio && !activeAudio.ended) {
+    return !activeAudio.paused || keyboardInterruptActive;
+  }
+  return activeUtterances > 0 || Boolean(activeText && unlimitedLoop);
 }
 
 export { VOICE_PRESETS };

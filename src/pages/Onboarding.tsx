@@ -19,18 +19,16 @@ import {
 import { arrowForward, stopCircle, volumeHigh } from 'ionicons/icons';
 import AppLogo from '../components/AppLogo';
 import { CATEGORIES, getDailyAffirmation } from '../data/affirmations';
-import RepeatSelector from '../components/RepeatSelector';
 import { useSettings } from '../hooks/useSettings';
 import { requestNotificationPermission, scheduleDailyNotification } from '../services/notifications';
 import { isElevenLabsConfigured } from '../services/elevenLabs';
 import { buildVoiceOptions } from '../services/voiceProfiles';
 import { previewVoice, stopSpeaking } from '../services/voice';
-import { DEFAULT_SETTINGS, type RepeatMode } from '../types/settings';
+import { DEFAULT_SETTINGS } from '../types/settings';
 import './Onboarding.css';
 
-const STEP_TITLES = ['Welcome', 'Focus', 'Practice', 'Reminders'] as const;
-
-const STEPS = ['welcome', 'focus', 'repeat', 'notifications'] as const;
+const STEP_TITLES = ['Welcome', 'Ready'] as const;
+const STEPS = ['setup', 'ready'] as const;
 
 const Onboarding: React.FC = () => {
   const history = useHistory();
@@ -38,8 +36,6 @@ const Onboarding: React.FC = () => {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [focusCategories, setFocusCategories] = useState<string[]>([]);
-  const [repeatCount, setRepeatCount] = useState(3);
-  const [repeatMode, setRepeatMode] = useState<RepeatMode>('fixed');
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notificationHour, setNotificationHour] = useState(8);
@@ -83,8 +79,8 @@ const Onboarding: React.FC = () => {
     const settings = {
       name: name.trim(),
       focusCategories,
-      repeatCount,
-      repeatMode,
+      repeatCount: 3,
+      repeatMode: 'fixed' as const,
       voiceEnabled,
       notificationsEnabled,
       notificationHour,
@@ -128,11 +124,11 @@ const Onboarding: React.FC = () => {
           ))}
         </div>
 
-        {currentStep === 'welcome' && (
+        {currentStep === 'setup' && (
           <div className="onboarding-step">
             <AppLogo size="lg" className="onboarding-logo" />
             <h1>Welcome to AffirmEaze</h1>
-            <p>Build a daily practice of self-belief with natural premium voices. Let's personalize your experience.</p>
+            <p>Daily affirmations with calm, natural premium voices.</p>
             <IonItem className="onboarding-input">
               <IonInput
                 label="Your name"
@@ -142,17 +138,9 @@ const Onboarding: React.FC = () => {
                 onIonInput={(e) => setName(e.detail.value ?? '')}
               />
             </IonItem>
-            <IonButton expand="block" onClick={() => setStep(1)} disabled={!name.trim()}>
-              Continue
-              <IonIcon slot="end" icon={arrowForward} />
-            </IonButton>
-          </div>
-        )}
-
-        {currentStep === 'focus' && (
-          <div className="onboarding-step">
-            <h1>What matters to you?</h1>
-            <p>Pick the areas you'd like to focus on. You can change these later.</p>
+            <IonText color="medium">
+              <p className="time-label">What matters to you?</p>
+            </IonText>
             <div className="category-grid">
               {CATEGORIES.map((category) => (
                 <IonItem key={category} lines="none" className="category-chip">
@@ -164,8 +152,9 @@ const Onboarding: React.FC = () => {
                 </IonItem>
               ))}
             </div>
-            <IonButton expand="block" onClick={() => setStep(2)} disabled={focusCategories.length === 0}>
+            <IonButton expand="block" onClick={() => setStep(1)} disabled={!name.trim() || focusCategories.length === 0}>
               Continue
+              <IonIcon slot="end" icon={arrowForward} />
             </IonButton>
             {focusCategories.length === 0 && (
               <p className="onboarding-voice-note">Choose at least one focus area to continue.</p>
@@ -173,16 +162,10 @@ const Onboarding: React.FC = () => {
           </div>
         )}
 
-        {currentStep === 'repeat' && (
+        {currentStep === 'ready' && (
           <div className="onboarding-step">
-            <h1>How many times?</h1>
-            <p>Choose a mantra count or set unlimited repetitions.</p>
-            <RepeatSelector
-              repeatMode={repeatMode}
-              repeatCount={repeatCount}
-              onModeChange={setRepeatMode}
-              onCountChange={setRepeatCount}
-            />
+            <h1>Your daily practice</h1>
+            <p>Voice and reminders — adjust anytime in Settings.</p>
             <IonItem lines="none">
               <IonLabel>Voice affirmations</IonLabel>
               <IonToggle
@@ -204,17 +187,8 @@ const Onboarding: React.FC = () => {
                 )}
               </>
             )}
-            <IonButton expand="block" onClick={() => setStep(3)}>
-              Continue
-            </IonButton>
-          </div>
-        )}
-
-        {currentStep === 'notifications' && (
-          <div className="onboarding-step">
-            <h1>Daily reminders</h1>
-            <p>Get a gentle nudge each morning with your affirmation.</p><IonItem lines="none">
-              <IonLabel>Daily notifications</IonLabel>
+            <IonItem lines="none">
+              <IonLabel>Daily reminder</IonLabel>
               <IonToggle
                 checked={notificationsEnabled}
                 onIonChange={(e) => setNotificationsEnabled(e.detail.checked)}
@@ -223,7 +197,7 @@ const Onboarding: React.FC = () => {
             {notificationsEnabled && (
               <>
                 <IonText color="medium">
-                  <p className="time-label">Notification time</p>
+                  <p className="time-label">Reminder time</p>
                 </IonText>
                 <IonRange
                   min={5}
@@ -239,9 +213,6 @@ const Onboarding: React.FC = () => {
                 </p>
               </>
             )}
-            <p className="onboarding-voice-note">
-              Next up: natural premium voices and your full daily practice.
-            </p>
             <IonButton expand="block" onClick={finish}>
               Start My Journey
             </IonButton>

@@ -25,8 +25,7 @@ export const PAYWALL_FEATURES = [
   'Hear affirmations in a voice that feels human',
   'Daily practice tailored to your focus areas',
   'Mantra-style repeats with calm delivery',
-  'Library, favorites, streaks, and reminders',
-  'Create new affirmations anytime',
+  'Favorites, custom affirmations, and daily reminders',
 ] as const;
 
 export const YEARLY_MONTHLY_EQUIVALENT = '$3.33';

@@ -2,6 +2,72 @@
   --padding-bottom: calc(5rem + var(--ion-safe-area-bottom, 0px));
 }
 
+.settings-hub-content {
+  --background: var(--ion-background-color, #f2f2f7);
+}
+
+.settings-group-label {
+  margin: 1.25rem 1.5rem 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ion-color-medium);
+}
+
+.settings-menu-list {
+  margin-bottom: 0.25rem;
+}
+
+.settings-menu-item ion-label h2 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.settings-menu-item ion-label p,
+.settings-menu-item ion-label:not(:has(h2)) {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
+.settings-menu-chevron {
+  font-size: 1rem;
+  color: var(--ion-color-medium);
+}
+
+.settings-name-item {
+  --padding-start: 1rem;
+  --inner-padding-end: 1rem;
+}
+
+.settings-detail-content {
+  --padding-top: 0.5rem;
+}
+
+.settings-detail-section {
+  padding: 0.5rem 1.5rem 2rem;
+}
+
+.settings-detail-lead {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.settings-menu-list {
+  margin-bottom: 0.25rem;
+}
+
+.settings-menu-list ion-item h2 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.settings-menu-list ion-item p {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
 .settings-brand {
   display: flex;
   align-items: center;

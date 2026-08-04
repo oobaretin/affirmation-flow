@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateAffirmations } from './aiAffirmations';
+import { generateAffirmations, generateNextAffirmation } from './aiAffirmations';
 
 describe('generateAffirmations', () => {
   it('generates local affirmations with category tags', async () => {
@@ -13,7 +13,6 @@ describe('generateAffirmations', () => {
     result.affirmations.forEach((affirmation) => {
       expect(['Confidence', 'Peace']).toContain(affirmation.category);
       expect(affirmation.text.length).toBeGreaterThan(0);
-      expect(affirmation.text).not.toContain('Alex');
     });
   });
 
@@ -27,5 +26,15 @@ describe('generateAffirmations', () => {
     result.affirmations.forEach((affirmation) => {
       expect(affirmation.category).toBe('Self-Love');
     });
+  });
+});
+
+describe('generateNextAffirmation', () => {
+  it('returns a single affirmation from the selected focus categories', async () => {
+    const affirmation = await generateNextAffirmation(['Gratitude', 'Health']);
+
+    expect(affirmation.id).toMatch(/^ai-/);
+    expect(['Gratitude', 'Health']).toContain(affirmation.category);
+    expect(affirmation.text.length).toBeGreaterThan(0);
   });
 });

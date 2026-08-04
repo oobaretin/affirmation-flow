@@ -7,102 +7,65 @@ import {
   IonButton,
   IonContent,
   IonHeader,
+  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   IonPage,
-  IonRange,
   IonText,
   IonTitle,
-  IonToggle,
   IonToolbar,
 } from '@ionic/react';
-import RepeatSelector from '../components/RepeatSelector';
-import FocusCategoryPicker from '../components/FocusCategoryPicker';
-import VoiceSettings from '../components/VoiceSettings';
-import AppLogo from '../components/AppLogo';
-import { useCustomAffirmations } from '../hooks/useCustomAffirmations';
+import { chevronForward } from 'ionicons/icons';
 import { useSettings } from '../hooks/useSettings';
 import { useSubscription } from '../hooks/useSubscription';
-import {
-  requestNotificationPermission,
-  scheduleDailyNotification,
-} from '../services/notifications';
-import { clearAllAppData, markExplicitLogout, pauseSession } from '../services/session';
-import { openManageSubscriptions } from '../services/subscription';
+import { clearAllAppData } from '../services/session';
 import { openExternalUrl } from '../services/links';
 import { APP_NAME, APP_VERSION, PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '../constants/app';
+import {
+  formatFocusSummary,
+  formatRenewalDate,
+  getPracticeSummary,
+  getRemindersSummary,
+  getVoiceSummary,
+} from './settings/settingsSummaries';
 import './Settings.css';
+
+type SettingsRowProps = {
+  title: string;
+  detail: string;
+  path: string;
+};
+
+const SettingsRow: React.FC<SettingsRowProps> = ({ title, detail, path }) => {
+  const history = useHistory();
+
+  return (
+    <IonItem
+      button
+      detail={false}
+      className="settings-menu-item"
+      onClick={() => history.push(path)}
+    >
+      <IonLabel>
+        <h2>{title}</h2>
+        <p>{detail}</p>
+      </IonLabel>
+      <IonIcon slot="end" icon={chevronForward} className="settings-menu-chevron" aria-hidden="true" />
+    </IonItem>
+  );
+};
 
 const Settings: React.FC = () => {
   const history = useHistory();
-  const { settings, updateSettings, resetOnboarding, logout } = useSettings();
-  const { status, purchasing, restore, isSubscribed } = useSubscription();
-  const { custom } = useCustomAffirmations();
-  const [showLogoutAlert, setShowLogoutAlert] = useState(false);
+  const { settings, updateSettings, resetOnboarding } = useSettings();
+  const { status, isSubscribed } = useSubscription();
   const [showClearAlert, setShowClearAlert] = useState(false);
-  const [notificationHint, setNotificationHint] = useState('');
-
-  const handleNotificationToggle = async (enabled: boolean) => {
-    if (enabled) {
-      const granted = await requestNotificationPermission();
-      if (!granted) {
-        setNotificationHint('Notifications are disabled. Enable them in iOS Settings → AffirmEaze → Notifications.');
-        return;
-      }
-      setNotificationHint('');
-    } else {
-      setNotificationHint('');
-    }
-
-    const updated = { ...settings, notificationsEnabled: enabled };
-    updateSettings({ notificationsEnabled: enabled });
-    await scheduleDailyNotification(updated, custom);
-  };
-
-  const handleTimeChange = async (hour: number) => {
-    const updated = { ...settings, notificationHour: hour };
-    updateSettings({ notificationHour: hour });
-    if (settings.notificationsEnabled) {
-      await scheduleDailyNotification(updated, custom);
-    }
-  };
-
-  const handleFocusChange = async (focusCategories: string[]) => {
-    const updated = { ...settings, focusCategories };
-    updateSettings({ focusCategories });
-    if (settings.notificationsEnabled) {
-      await scheduleDailyNotification(updated, custom);
-    }
-  };
-
-  const handleLogout = async () => {
-    await pauseSession();
-    markExplicitLogout();
-    logout();
-    history.replace('/signed-out');
-  };
 
   const handleClearAll = async () => {
     await clearAllAppData();
     window.location.replace('/onboarding');
-  };
-
-  const formatHour = (hour: number) => {
-    const h = hour > 12 ? hour - 12 : hour;
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    return `${h}:00 ${ampm}`;
-  };
-
-  const formatRenewalDate = (value: string | null) => {
-    if (!value) return 'Active';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Active';
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
   };
 
   const subscriptionSummary = isSubscribed
@@ -116,26 +79,16 @@ const Settings: React.FC = () => {
           <IonTitle>Settings</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="settings-content" scrollY>
+      <IonContent fullscreen className="settings-content settings-hub-content" scrollY>
         <IonHeader collapse="condense">
           <IonToolbar>
             <IonTitle size="large">Settings</IonTitle>
           </IonToolbar>
         </IonHeader>
 
-        <div className="settings-brand">
-          <AppLogo size="sm" />
-          <div className="settings-brand-text">
-            <h2>AffirmEaze</h2>
-            <p>Daily affirmations, your way</p>
-          </div>
-        </div>
-
-        <div className="settings-section">
-          <IonText color="medium">
-            <h3>Account</h3>
-          </IonText>
-          <IonItem lines="full" className="settings-inline-item">
+        <p className="settings-group-label">Profile</p>
+        <IonList inset className="settings-menu-list">
+          <IonItem lines="full" className="settings-name-item">
             <IonInput
               label="Your name"
               labelPlacement="stacked"
@@ -143,101 +96,34 @@ const Settings: React.FC = () => {
               onIonInput={(e) => updateSettings({ name: e.detail.value ?? '' })}
             />
           </IonItem>
-          <p className="settings-hint settings-subscription-summary">{subscriptionSummary}</p>
-          <div className="settings-actions settings-actions-compact">
-            <IonButton expand="block" fill="outline" size="small" onClick={() => openManageSubscriptions()}>
-              Manage Subscription
-            </IonButton>
-            <IonButton
-              expand="block"
-              fill="clear"
-              size="small"
-              disabled={purchasing}
-              onClick={() => void restore()}
-            >
-              Restore Purchases
-            </IonButton>
-          </div>
-        </div>
+        </IonList>
 
-        <div className="settings-section settings-practice-section">
-          <IonText color="medium">
-            <h3>Your Practice</h3>
-          </IonText>
-          <p className="settings-hint">
-            Repeats, voice, reminders, and focus areas
-          </p>
-          <RepeatSelector
-            repeatMode={settings.repeatMode}
-            repeatCount={settings.repeatCount}
-            onModeChange={(mode) => updateSettings({ repeatMode: mode })}
-            onCountChange={(count) => updateSettings({ repeatCount: count, repeatMode: 'fixed' })}
-          />
-          <IonItem lines="none" className="settings-inline-item">
-            <IonLabel>Voice affirmations</IonLabel>
-            <IonToggle
-              checked={settings.voiceEnabled}
-              onIonChange={(e) => updateSettings({ voiceEnabled: e.detail.checked })}
-            />
-          </IonItem>
-          {settings.voiceEnabled && (
-            <VoiceSettings
-              voiceStyle={settings.voiceStyle}
-              elevenLabsVoiceId={settings.elevenLabsVoiceId}
-              onStyleChange={(voiceStyle) => updateSettings({ voiceStyle })}
-              onElevenLabsVoiceChange={(elevenLabsVoiceId) => updateSettings({ elevenLabsVoiceId })}
-            />
-          )}
-          <IonItem lines="none" className="settings-inline-item">
-            <IonLabel>Daily reminder</IonLabel>
-            <IonToggle
-              checked={settings.notificationsEnabled}
-              onIonChange={(e) => handleNotificationToggle(e.detail.checked)}
-            />
-          </IonItem>
-          {notificationHint && (
-            <p className="settings-hint settings-warning">{notificationHint}</p>
-          )}
-          {settings.notificationsEnabled && (
-            <>
-              <p className="settings-hint">Reminder time: {formatHour(settings.notificationHour)}</p>
-              <IonRange
-                min={5}
-                max={22}
-                step={1}
-                value={settings.notificationHour}
-                onIonChange={(e) => handleTimeChange(e.detail.value as number)}
-                pin
-              />
-            </>
-          )}
-          <FocusCategoryPicker
-            selected={settings.focusCategories}
-            onChange={handleFocusChange}
-          />
-        </div>
+        <p className="settings-group-label">Preferences</p>
+        <IonList inset className="settings-menu-list">
+          <SettingsRow title="Subscription" detail={subscriptionSummary} path="/settings/subscription" />
+          <SettingsRow title="Practice" detail={getPracticeSummary(settings)} path="/settings/practice" />
+          <SettingsRow title="Voice" detail={getVoiceSummary(settings)} path="/settings/voice" />
+          <SettingsRow title="Reminders" detail={getRemindersSummary(settings)} path="/settings/reminders" />
+          <SettingsRow title="Focus Areas" detail={formatFocusSummary(settings.focusCategories)} path="/settings/focus" />
+        </IonList>
 
-        <div className="settings-section settings-about-section">
-          <IonText color="medium">
-            <h3>About</h3>
-          </IonText>
-          <p className="settings-hint">
-            {APP_NAME} v{APP_VERSION}
-          </p>
-          <div className="settings-actions settings-actions-compact">
-            <IonButton expand="block" fill="clear" size="small" onClick={() => openExternalUrl(PRIVACY_POLICY_URL)}>
-              Privacy Policy
-            </IonButton>
-            <IonButton
-              expand="block"
-              fill="clear"
-              size="small"
-              href={`mailto:${SUPPORT_EMAIL}`}
-            >
-              Contact Support
-            </IonButton>
-          </div>
-        </div>
+        <p className="settings-group-label">About</p>
+        <IonList inset className="settings-menu-list">
+          <IonItem lines="none" className="settings-menu-item">
+            <IonLabel>
+              <h2>{APP_NAME}</h2>
+              <p>Version {APP_VERSION}</p>
+            </IonLabel>
+          </IonItem>
+          <IonItem button detail={false} className="settings-menu-item" onClick={() => openExternalUrl(PRIVACY_POLICY_URL)}>
+            <IonLabel>Privacy Policy</IonLabel>
+            <IonIcon slot="end" icon={chevronForward} className="settings-menu-chevron" aria-hidden="true" />
+          </IonItem>
+          <IonItem button detail={false} className="settings-menu-item" href={`mailto:${SUPPORT_EMAIL}`}>
+            <IonLabel>Contact Support</IonLabel>
+            <IonIcon slot="end" icon={chevronForward} className="settings-menu-chevron" aria-hidden="true" />
+          </IonItem>
+        </IonList>
 
         <div className="settings-section settings-advanced-section">
           <IonAccordionGroup className="settings-advanced-accordion">
@@ -247,7 +133,7 @@ const Settings: React.FC = () => {
                   <IonText color="medium">
                     <h3 className="settings-advanced-heading">Advanced</h3>
                   </IonText>
-                  <p className="settings-advanced-summary">Lock, reset, or erase this device</p>
+                  <p className="settings-advanced-summary">Reset or erase this device</p>
                 </IonLabel>
               </IonItem>
               <div slot="content" className="settings-advanced-content">
@@ -255,13 +141,6 @@ const Settings: React.FC = () => {
                   AffirmEaze stores everything locally on this device. There is no cloud account.
                 </p>
                 <div className="settings-actions">
-                  <IonButton
-                    expand="block"
-                    color="primary"
-                    onClick={() => setShowLogoutAlert(true)}
-                  >
-                    Lock App
-                  </IonButton>
                   <IonButton
                     expand="block"
                     fill="outline"
@@ -287,21 +166,10 @@ const Settings: React.FC = () => {
         </div>
 
         <IonAlert
-          isOpen={showLogoutAlert}
-          onDidDismiss={() => setShowLogoutAlert(false)}
-          header="Lock App?"
-          message="You'll return to the lock screen. Your affirmations, favorites, and settings stay on this device."
-          buttons={[
-            { text: 'Cancel', role: 'cancel' },
-            { text: 'Lock App', handler: handleLogout },
-          ]}
-        />
-
-        <IonAlert
           isOpen={showClearAlert}
           onDidDismiss={() => setShowClearAlert(false)}
           header="Clear All Data?"
-          message="This permanently deletes your profile, custom affirmations, favorites, and settings. This cannot be undone."
+          message="This permanently deletes your profile, favorites, and settings. This cannot be undone."
           buttons={[
             { text: 'Cancel', role: 'cancel' },
             { text: 'Delete Everything', role: 'destructive', handler: handleClearAll },

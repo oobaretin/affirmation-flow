@@ -157,12 +157,8 @@ async function captureSettingsVoice(page) {
     favorites: FAVORITES,
     streak: { lastPracticeDate: todayIso(), currentStreak: 5 },
   });
-  await page.goto(`${BASE}/settings`, { waitUntil: 'networkidle' });
-  await page.getByText('Your Practice').waitFor({ timeout: 15000 });
-  await page.evaluate(() => {
-    const voiceSection = document.querySelector('.voice-settings');
-    voiceSection?.scrollIntoView({ block: 'center' });
-  });
+  await page.goto(`${BASE}/settings/voice`, { waitUntil: 'networkidle' });
+  await page.getByText('Voice affirmations').waitFor({ timeout: 15000 });
   await page.waitForTimeout(1200);
   await page.screenshot({
     path: path.join(OUT_DIR, '05-settings-voice.png'),
@@ -193,8 +189,7 @@ async function runCaptureSet({ subscriptionBypass, includePaywall, includeApp })
       });
 
       await capture(page, '02-today.png', '/today', 'Hello, Alex');
-      await capture(page, '03-library.png', '/library', 'Library');
-      await capture(page, '04-favorites.png', '/favorites', 'Favorites');
+      await capture(page, '03-my-affirmations.png', '/my', 'My Affirmations');
       await captureSettingsVoice(page);
       await captureOnboarding(page);
     }
@@ -212,7 +207,7 @@ async function main() {
   await runCaptureSet({ subscriptionBypass: true, includePaywall: false, includeApp: true });
   await runCaptureSet({ subscriptionBypass: false, includePaywall: true, includeApp: false });
 
-  console.log('\nDone — 6 screenshots saved.');
+  console.log('\nDone — 4 screenshots saved.');
 }
 
 main().catch((error) => {

@@ -1,4 +1,4 @@
-import type { Category } from '../data/affirmations';
+import type { Affirmation, Category } from '../data/affirmations';
 
 export interface GeneratedAffirmation {
   text: string;
@@ -91,6 +91,14 @@ function normalizeCategoryPool(categories: string[]): Category[] {
   return pool.length > 0 ? pool : ['Self-Love'];
 }
 
+export function getOpenAiApiKey(): string {
+  return import.meta.env.VITE_OPENAI_API_KEY?.trim() ?? '';
+}
+
+export function isOpenAiConfigured(): boolean {
+  return getOpenAiApiKey().length > 0;
+}
+
 function generateLocal(options: GenerateOptions): GeneratedAffirmation[] {
   const count = Math.min(Math.max(options.count ?? 3, 1), 10);
   const pool = normalizeCategoryPool(options.categories);
@@ -117,7 +125,7 @@ function generateLocal(options: GenerateOptions): GeneratedAffirmation[] {
 type OpenAiAffirmation = string | { text?: string; category?: string };
 
 async function generateWithOpenAI(options: GenerateOptions): Promise<GeneratedAffirmation[] | null> {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY as string | undefined;
+  const apiKey = getOpenAiApiKey();
   if (!apiKey) return null;
 
   const count = options.count ?? 3;
@@ -180,6 +188,14 @@ Return only a JSON array. Each item may be a string or an object with "text" and
   }
 }
 
+export function toAffirmation(generated: GeneratedAffirmation, idPrefix = 'ai'): Affirmation {
+  return {
+    id: `${idPrefix}-${Date.now()}`,
+    text: generated.text,
+    category: generated.category,
+  };
+}
+
 export async function generateAffirmations(options: GenerateOptions): Promise<{
   affirmations: GeneratedAffirmation[];
   source: 'ai' | 'local';
@@ -190,4 +206,10 @@ export async function generateAffirmations(options: GenerateOptions): Promise<{
   }
 
   return { affirmations: generateLocal(options), source: 'local' };
+}
+
+export async function generateNextAffirmation(focusCategories: string[]): Promise<Affirmation> {
+  const categories = focusCategories.length > 0 ? focusCategories : ['Self-Love'];
+  const { affirmations } = await generateAffirmations({ categories, count: 1 });
+  return toAffirmation(affirmations[0] ?? generateLocal({ categories, count: 1 })[0]);
 }

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import App from './App';
+import { initVoiceKeyboardGuard } from './services/voice';
 
 async function initNativePlugins() {
   if (!Capacitor.isNativePlatform()) return;
@@ -13,6 +14,8 @@ async function initNativePlugins() {
   } catch {
     // Status bar plugin unavailable
   }
+
+  initVoiceKeyboardGuard();
 }
 
 initNativePlugins();

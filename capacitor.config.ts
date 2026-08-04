@@ -11,6 +11,9 @@ const config: CapacitorConfig = {
     StatusBar: {
       overlaysWebView: false,
     },
+    Keyboard: {
+      resize: 'ionic',
+    },
   },
 };
 

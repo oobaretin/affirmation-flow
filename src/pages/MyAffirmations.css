@@ -1,0 +1,172 @@
+.my-affirmations-content {
+  --padding-bottom: 1.5rem;
+}
+
+.custom-add-trigger {
+  padding: 0 1rem 0.75rem;
+}
+
+.custom-add-modal-content {
+  --padding-start: 1rem;
+  --padding-end: 1rem;
+  --padding-top: 0.75rem;
+}
+
+.custom-add-modal-content .custom-affirmation-input {
+  min-height: 8rem;
+  max-height: none;
+}
+
+.my-affirmations-section {
+  padding: 0 0 1.5rem;
+}
+
+.my-affirmations-section h2 {
+  margin: 0;
+  padding: 1rem 1.25rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ion-color-medium);
+}
+
+.my-affirmations-section p.section-hint {
+  margin: 0;
+  padding: 0 1.25rem 0.75rem;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+  line-height: 1.45;
+}
+
+.my-affirmations-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2rem 2rem;
+  text-align: center;
+}
+
+.my-affirmations-empty ion-icon {
+  font-size: 2.25rem;
+  color: var(--ion-color-medium);
+  margin-bottom: 0.75rem;
+}
+
+.my-affirmations-empty h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ion-text-color);
+}
+
+.my-affirmations-empty p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+  max-width: 16rem;
+  line-height: 1.45;
+}
+
+.affirmation-row-category {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ion-color-primary);
+  margin-bottom: 0.25rem;
+}
+
+.affirmation-row-text {
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.affirmation-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.affirmation-row-action {
+  background: none;
+  border: none;
+  font-size: 1.35rem;
+  color: var(--ion-color-medium);
+  cursor: pointer;
+  padding: 0.35rem;
+}
+
+.affirmation-row-action.active,
+.affirmation-row-action.saved {
+  color: var(--ion-color-primary);
+}
+
+.affirmation-row-action--delete {
+  color: var(--ion-color-danger);
+}
+
+.affirmation-row .affirmation-row-text {
+  padding-right: 0.5rem;
+}
+
+.custom-add-form {
+  padding: 0.35rem 0.75rem 0.5rem;
+  width: 100%;
+}
+
+.custom-affirmation-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.18);
+  border-radius: 12px;
+  background: var(--ion-background-color);
+  color: var(--ion-text-color);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: none;
+  min-height: 4.5rem;
+  max-height: 7rem;
+}
+
+.custom-affirmation-input:focus {
+  outline: none;
+  border-color: rgba(var(--ion-color-primary-rgb), 0.45);
+  box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.12);
+}
+
+.custom-affirmation-input::placeholder {
+  color: var(--ion-color-medium);
+}
+
+.my-affirmations-category-group {
+  margin-bottom: 0.5rem;
+}
+
+.my-affirmations-category-label {
+  margin: 0;
+  padding: 0.75rem 1.25rem 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ion-color-primary);
+}
+
+.custom-add-actions {
+  margin-top: 0.75rem;
+}
+
+.custom-add-actions ion-button {
+  margin: 0;
+}
+
+.custom-save-toast {
+  margin: 0.5rem 1.25rem 0;
+  font-size: 0.85rem;
+  color: var(--ion-color-primary);
+}

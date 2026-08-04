@@ -1,32 +1,24 @@
-import { describe, expect, it, beforeEach } from 'vitest';
-import {
-  EXPLICIT_LOGOUT_KEY,
-  clearExplicitLogout,
-  getLoggedOutDefaultRoute,
-  hasExplicitLogout,
-  markExplicitLogout,
-} from './session';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { clearAllAppData, STORAGE_KEYS } from './session';
 
-describe('session logout routing', () => {
+vi.mock('./notifications', () => ({
+  cancelDailyNotification: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('./voice', () => ({
+  stopSpeaking: vi.fn(),
+}));
+
+describe('clearAllAppData', () => {
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
   });
 
-  it('routes explicit logout to signed-out', () => {
-    markExplicitLogout();
-    expect(hasExplicitLogout()).toBe(true);
-    expect(getLoggedOutDefaultRoute(hasExplicitLogout())).toBe('/signed-out');
-  });
-
-  it('routes cold start to welcome when no explicit logout flag', () => {
-    expect(hasExplicitLogout()).toBe(false);
-    expect(getLoggedOutDefaultRoute(hasExplicitLogout())).toBe('/welcome');
-  });
-
-  it('clears explicit logout flag on resume', () => {
-    markExplicitLogout();
-    clearExplicitLogout();
-    expect(sessionStorage.getItem(EXPLICIT_LOGOUT_KEY)).toBeNull();
-    expect(getLoggedOutDefaultRoute(hasExplicitLogout())).toBe('/welcome');
+  it('removes all app storage keys', async () => {
+    STORAGE_KEYS.forEach((key) => localStorage.setItem(key, 'test'));
+    await clearAllAppData();
+    STORAGE_KEYS.forEach((key) => {
+      expect(localStorage.getItem(key)).toBeNull();
+    });
   });
 });
