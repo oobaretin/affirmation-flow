@@ -2,16 +2,16 @@
 
 Use this checklist while you build and test locally. Check items off as you go.
 
-**Last updated:** August 2026 — reflects Settings simplification, GitHub Pages privacy URL, and working iOS build pipeline.
+**Last updated:** August 2026 — reflects Saved tab, Settings hub drill-ins, 3-step onboarding, and Today auto-play.
 
 ---
 
 ## Do next (before paying $99 for Apple)
 
-These are the highest-value items you can finish **without** a Developer account:
+Follow the ordered checklist in [testflight-prep.md](./testflight-prep.md) **Phase 1**. Highest-value items:
 
 1. [ ] **Full app walkthrough** — simulator, then physical iPhone ([local-testing.md](./local-testing.md))
-2. [ ] **ElevenLabs** — add `VITE_ELEVENLABS_API_KEY` to `.env.local`, rebuild, test voice on Today / Library / Paywall / Settings
+2. [ ] **ElevenLabs** — add `VITE_ELEVENLABS_API_KEY` to `.env.local`, rebuild, test voice on Today / Saved / Paywall / Settings → Voice
 3. [ ] **Estimate ElevenLabs cost** per active user (voice is your main ongoing expense)
 4. [ ] **Finalize App Store copy** — review [app-store-metadata.md](./app-store-metadata.md)
 5. [ ] **Verify URLs on your phone** — privacy policy + support page load cleanly
@@ -28,7 +28,7 @@ These are the highest-value items you can finish **without** a Developer account
 - [x] Shell env in `~/.zshrc` (`DEVELOPER_DIR`, CocoaPods `PATH`, `LANG`)
 - [x] `npm run build:ios` succeeds (web build + cap sync + pod install)
 - [x] `npm run open:ios` opens Xcode workspace
-- [ ] Walk through onboarding → Today → Library → Favorites → Settings → Voice preview
+- [ ] Walk through onboarding → Today → Saved → Settings (Account, Practice, Voice)
 - [ ] Confirm paywall is **skipped** in simulator (dev bypass active)
 - [ ] Preview paywall UI once (set bypass `false`, rebuild, then turn bypass back on)
 
@@ -48,9 +48,9 @@ These are the highest-value items you can finish **without** a Developer account
 ## Screenshots
 
 - [x] Follow [screenshots-guide.md](./screenshots-guide.md)
-- [x] Capture 6.7" iPhone 16 Pro Max simulator shots: Paywall, Today, Library, Favorites, Settings (Voice), Onboarding
+- [x] Capture 6.7" iPhone 16 Pro Max shots: Paywall, Today, Saved, Settings (Voice), Onboarding
 - [x] Store PNGs in `docs/screenshots/` (run `npm run screenshots` to regenerate)
-- [ ] Re-capture after Settings layout change (Advanced accordion) if submitting soon
+- [ ] Re-capture after major UI changes (`npm run screenshots`)
 
 ## Privacy policy URL
 
@@ -86,7 +86,7 @@ These are the highest-value items you can finish **without** a Developer account
 
 ## When you have the $99 Apple Developer account
 
-Continue with [app-store-checklist.md](./app-store-checklist.md):
+Continue with [testflight-prep.md](./testflight-prep.md) and [app-store-checklist.md](./app-store-checklist.md):
 
 1. Enroll in Apple Developer Program
 2. Create app record + subscription products in App Store Connect

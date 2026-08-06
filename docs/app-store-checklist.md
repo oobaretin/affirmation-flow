@@ -1,5 +1,7 @@
 # App Store Connect checklist
 
+Start with the ordered guide: [testflight-prep.md](./testflight-prep.md).
+
 ## Free phase (no $99 account yet)
 
 See [pre-ship-free-tasks.md](./pre-ship-free-tasks.md) for the full free checklist.
@@ -57,10 +59,9 @@ See [pre-ship-free-tasks.md](./pre-ship-free-tasks.md) for the full free checkli
 
 1. **Paywall** — "Natural premium voices — hear the difference"
 2. **Today** — "Your daily affirmation, ready to speak"
-3. **Library** — "Browse, search, and save affirmations"
-4. **Favorites** — "Save the lines that resonate"
-5. **Settings** — "Personalize focus, voice, and reminders"
-6. **Onboarding** — "Start with calm, spoken affirmations"
+3. **Saved** — "Keep the lines that resonate"
+4. **Settings** — "Personalize focus, voice, and reminders"
+5. **Onboarding** — "Start with calm, spoken affirmations"
 
 ## Reviewer notes
 

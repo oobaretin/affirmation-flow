@@ -121,8 +121,8 @@ async function capturePaywall(page) {
   await seedStorage(page, {
     settings: { ...BASE_SETTINGS, onboardingComplete: true, isLoggedIn: true },
   });
-  await page.goto(`${BASE}/today`, { waitUntil: 'networkidle' });
-  await page.getByText('Unlock AffirmEaze Premium').waitFor({ timeout: 15000 });
+  await page.goto(`${BASE}/paywall`, { waitUntil: 'networkidle' });
+  await page.getByText('Hear the difference').waitFor({ timeout: 20000 });
   await page.waitForTimeout(1200);
   await page.screenshot({
     path: path.join(OUT_DIR, '01-paywall.png'),
@@ -142,7 +142,7 @@ async function captureOnboarding(page) {
     },
   });
   await page.goto(`${BASE}/onboarding`, { waitUntil: 'networkidle' });
-  await page.getByText('Welcome to AffirmEaze').waitFor({ timeout: 15000 });
+  await page.getByText('What matters to you?').waitFor({ timeout: 15000 });
   await page.waitForTimeout(1200);
   await page.screenshot({
     path: path.join(OUT_DIR, '06-onboarding.png'),
@@ -188,7 +188,7 @@ async function runCaptureSet({ subscriptionBypass, includePaywall, includeApp })
         streak: { lastPracticeDate: todayIso(), currentStreak: 5 },
       });
 
-      await capture(page, '02-today.png', '/today', 'Hello, Alex');
+      await capture(page, '02-today.png', '/today', 'Alex');
       await capture(page, '03-saved.png', '/my', 'Saved');
       await captureSettingsVoice(page);
       await captureOnboarding(page);
@@ -207,7 +207,7 @@ async function main() {
   await runCaptureSet({ subscriptionBypass: true, includePaywall: false, includeApp: true });
   await runCaptureSet({ subscriptionBypass: false, includePaywall: true, includeApp: false });
 
-  console.log('\nDone — 4 screenshots saved.');
+  console.log('\nDone — 5 screenshots saved.');
 }
 
 main().catch((error) => {

@@ -78,7 +78,7 @@ AffirmEaze is a subscription-only affirmation app.
 Flow:
 1. User completes onboarding (name, focus areas, voice/reminder preferences)
 2. User sees paywall, picks monthly or annual, and starts a 7-day free trial via Apple In-App Purchase
-3. After subscribing, user accesses Today, Library, Favorites, and Settings
+3. After subscribing, user accesses Today, Saved, and Settings
 
 No login or cloud account. Data is stored locally on device.
 "Lock App" in Settings returns user to a local lock screen; data remains on device.
@@ -96,6 +96,6 @@ Test subscription products:
 | `com.affirmationflow.app.premium.monthly` | AffirmEaze Premium Monthly | $4.99 |
 | `com.affirmationflow.app.premium.yearly` | AffirmEaze Premium Annual | $39.99 |
 
-**Monthly description:** Full access — natural premium voices, daily affirmations, library, AI, and reminders.
+**Monthly description:** Full access — natural premium voices, daily affirmations, saved favorites, AI, and reminders.
 
 **Annual description:** Full access with natural premium voices. Best value — save vs monthly.

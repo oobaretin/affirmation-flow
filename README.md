@@ -6,10 +6,9 @@ Daily affirmations with natural premium voices, favorites, streaks, and a person
 
 ## Features
 
-- **Today** — focus-based daily affirmation, streak tracking, pin, share, voice
-- **Library** — browse by category, search, custom affirmations, AI generator
-- **Favorites** — speak, share, and send to Today
-- **Settings** — premium voice, notifications, focus areas, subscription management
+- **Today** — focus-based daily affirmation, auto-play voice, streak, share, “Another line”
+- **Saved** — favorites and custom affirmations with filters
+- **Settings** — Account, practice, voice, reminders, focus areas
 
 ## Development
 
@@ -49,6 +48,7 @@ Remove `VITE_SUBSCRIPTION_DEV_BYPASS` for production builds. See [docs/app-store
 
 | Doc | Purpose |
 |-----|---------|
+| [testflight-prep.md](docs/testflight-prep.md) | **Start here** — ordered TestFlight & App Store steps |
 | [pre-ship-free-tasks.md](docs/pre-ship-free-tasks.md) | Master checklist while waiting for $99 account |
 | [local-testing.md](docs/local-testing.md) | Simulator build & test |
 | [app-store-metadata.md](docs/app-store-metadata.md) | Copy-paste App Store description & keywords |
