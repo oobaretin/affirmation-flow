@@ -12,6 +12,7 @@
     "lint": "eslint",
     "build:ios": "npm run build && npx cap sync ios",
     "open:ios": "npx cap open ios",
+    "ios:rn": "cd mobile-rn && npm run ios",
     "screenshots": "node scripts/capture-screenshots.mjs"
   },
   "dependencies": {
