@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import * as Linking from 'expo-linking';
 import Purchases, {
   LOG_LEVEL,
   type CustomerInfo,
@@ -35,6 +36,12 @@ function getRevenueCatApiKey(): string {
     return getEnv('EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY');
   }
   return '';
+}
+
+const MANAGE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions';
+
+export function openManageSubscriptions(): void {
+  void Linking.openURL(MANAGE_SUBSCRIPTIONS_URL);
 }
 
 export function canUseNativePurchases(): boolean {

@@ -11,6 +11,7 @@
     "expo-font": "~57.0.1",
     "expo-haptics": "~57.0.1",
     "expo-linking": "~57.0.5",
+    "expo-notifications": "~57.0.8",
     "expo-router": "~57.0.10",
     "expo-splash-screen": "~57.0.5",
     "expo-status-bar": "~57.0.1",
@@ -34,6 +35,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
+    "ios:dev": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit"
   },

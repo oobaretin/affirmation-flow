@@ -40,6 +40,7 @@ interface SettingsContextValue {
   updateSettings: (updates: Partial<UserSettings>) => void;
   completeOnboarding: (updates: Partial<UserSettings>) => void;
   resetOnboarding: () => void;
+  resetSettings: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -72,9 +73,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, onboardingComplete: false, isLoggedIn: false }));
   }, []);
 
+  const resetSettings = useCallback(() => {
+    setSettings(DEFAULT_SETTINGS);
+  }, []);
+
   const value = useMemo(
-    () => ({ ready, settings, updateSettings, completeOnboarding, resetOnboarding }),
-    [ready, settings, updateSettings, completeOnboarding, resetOnboarding],
+    () => ({ ready, settings, updateSettings, completeOnboarding, resetOnboarding, resetSettings }),
+    [ready, settings, updateSettings, completeOnboarding, resetOnboarding, resetSettings],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

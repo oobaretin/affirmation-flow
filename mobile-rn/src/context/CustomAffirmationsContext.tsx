@@ -35,6 +35,7 @@ interface CustomAffirmationsContextValue {
   custom: Affirmation[];
   addCustom: (text: string) => void;
   removeCustom: (id: string) => void;
+  clearCustom: () => void;
 }
 
 const CustomAffirmationsContext = createContext<CustomAffirmationsContextValue | null>(null);
@@ -63,9 +64,13 @@ export function CustomAffirmationsProvider({ children }: { children: ReactNode }
     setCustom((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
+  const clearCustom = useCallback(() => {
+    setCustom([]);
+  }, []);
+
   const value = useMemo(
-    () => ({ custom, addCustom, removeCustom }),
-    [custom, addCustom, removeCustom],
+    () => ({ custom, addCustom, removeCustom, clearCustom }),
+    [custom, addCustom, removeCustom, clearCustom],
   );
 
   return (

@@ -28,6 +28,7 @@ interface FavoritesContextValue {
   isFavorite: (id: string) => boolean;
   toggleFavorite: (item: Affirmation) => void;
   removeFavorite: (id: string) => void;
+  clearFavorites: () => void;
 }
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
@@ -64,9 +65,13 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     setFavorites((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
+  const clearFavorites = useCallback(() => {
+    setFavorites([]);
+  }, []);
+
   const value = useMemo(
-    () => ({ favorites, isFavorite, toggleFavorite, removeFavorite }),
-    [favorites, isFavorite, toggleFavorite, removeFavorite],
+    () => ({ favorites, isFavorite, toggleFavorite, removeFavorite, clearFavorites }),
+    [favorites, isFavorite, toggleFavorite, removeFavorite, clearFavorites],
   );
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;

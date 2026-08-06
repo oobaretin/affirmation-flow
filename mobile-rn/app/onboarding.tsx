@@ -16,6 +16,7 @@ import { CATEGORIES, getDailyAffirmation } from '@/src/data/affirmations';
 import { isElevenLabsConfigured } from '@/src/services/elevenLabs';
 import { buildVoiceOptions } from '@/src/services/voiceProfiles';
 import { previewVoice, stopSpeaking } from '@/src/services/voice';
+import { requestNotificationPermission, scheduleDailyNotification } from '@/src/services/notifications';
 import Colors from '@/src/theme/colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -66,7 +67,7 @@ export default function OnboardingScreen() {
 
   const finish = () => {
     stopSpeaking();
-    completeOnboarding({
+    const onboardingSettings = {
       name: name.trim(),
       focusCategories,
       voiceEnabled,
@@ -74,9 +75,18 @@ export default function OnboardingScreen() {
       notificationHour: 8,
       notificationMinute: 0,
       repeatCount: 3,
-      repeatMode: 'fixed',
-    });
+      repeatMode: 'fixed' as const,
+    };
+    completeOnboarding(onboardingSettings);
     router.replace('/');
+
+    if (notificationsEnabled) {
+      void requestNotificationPermission().then((granted) => {
+        if (granted) {
+          void scheduleDailyNotification(onboardingSettings);
+        }
+      });
+    }
   };
 
   const current = STEPS[step];
