@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useEffect, useState } from 'react';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import {
   IonButton,
@@ -46,11 +46,12 @@ import {
 import { consumeQueuedTodayAffirmation } from '../services/todaySelection';
 import {
   getTodayViewSession,
+  markTodayAwaitingPlay,
   markTodayPracticeStarted,
   setTodayVoicePracticeActive,
 } from '../services/todayViewSession';
 import { buildVoiceOptions } from '../services/voiceProfiles';
-import { getActiveSpeechText, isSpeaking, speakAffirmation, stopSpeaking } from '../services/voice';
+import { ensurePlaybackContinues, getActiveSpeechText, isSpeaking, speakAffirmation, stopSpeaking } from '../services/voice';
 import { getTimeAwareGreeting } from '../utils/greeting';
 import './Today.css';
 
@@ -76,10 +77,26 @@ const Today: React.FC = () => {
   const [generatingAffirmation, setGeneratingAffirmation] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
   const [isFirstTodayVisit] = useState(() => !getTodayViewSession().initialized);
-  const showTodayLoader = useMinimumLoaderDuration(
+  const loaderVisible = useMinimumLoaderDuration(
     !affirmation,
     isFirstTodayVisit ? undefined : 0,
   );
+  const [introLoaderPhase, setIntroLoaderPhase] = useState<'visible' | 'exit' | 'hidden'>(
+    isFirstTodayVisit ? 'visible' : 'hidden',
+  );
+
+  useEffect(() => {
+    if (!isFirstTodayVisit || !affirmation) return;
+
+    if (loaderVisible) {
+      setIntroLoaderPhase('visible');
+      return;
+    }
+
+    setIntroLoaderPhase('exit');
+    const timer = window.setTimeout(() => setIntroLoaderPhase('hidden'), 480);
+    return () => window.clearTimeout(timer);
+  }, [affirmation, isFirstTodayVisit, loaderVisible]);
 
   const greeting = getTimeAwareGreeting(settings.name);
   const pinned = isPinnedToday(affirmation?.id ?? '');
@@ -98,12 +115,13 @@ const Today: React.FC = () => {
   const handleStop = () => {
     stopSpeaking();
     endVoicePractice();
+    setSessionComplete(true);
+    window.setTimeout(() => setSessionComplete(false), 3000);
   };
 
   const speakDailyAffirmation = (daily: Affirmation, onNaturalEnd?: () => void) => {
     if (!settings.voiceEnabled) return;
 
-    stopSpeaking();
     beginVoicePractice();
     const unlimited = settings.repeatMode === 'unlimited';
     speakAffirmation(
@@ -116,7 +134,11 @@ const Today: React.FC = () => {
       unlimited,
       voiceOptions,
     ).catch(() => {
-      endVoicePractice();
+      if (getTodayViewSession().voicePracticeActive) {
+        ensurePlaybackContinues();
+      } else {
+        endVoicePractice();
+      }
     });
   };
 
@@ -149,6 +171,7 @@ const Today: React.FC = () => {
     if (resumeVoicePractice) {
       setVoicePracticeActive(true);
       setPracticeStarted(true);
+      ensurePlaybackContinues();
     } else {
       setPracticeStarted(!session.awaitingPlay);
     }
@@ -157,15 +180,11 @@ const Today: React.FC = () => {
 
     const queued = consumeQueuedTodayAffirmation();
     const passed = queued?.affirmation ?? location.state?.affirmation;
-    const shouldAutoPlay = queued?.autoPlay ?? Boolean(location.state?.affirmation);
 
     if (passed) {
       setAffirmation(passed);
-      if (shouldAutoPlay) {
-        void startPractice(passed, true);
-      } else {
-        setPracticeStarted(false);
-      }
+      markTodayAwaitingPlay(passed.id);
+      setPracticeStarted(false);
       history.replace('/today');
       return;
     }
@@ -176,7 +195,8 @@ const Today: React.FC = () => {
       if (!session.initialized) {
         session.initialized = true;
         if (!resumeVoicePractice) {
-          void startPractice(pinnedToday, settings.voiceEnabled);
+          markTodayAwaitingPlay(pinnedToday.id);
+          setPracticeStarted(false);
         }
       }
       return;
@@ -187,7 +207,8 @@ const Today: React.FC = () => {
       const daily = getDailyAffirmation(custom, settings.focusCategories);
       setAffirmation(daily);
       if (!resumeVoicePractice) {
-        void startPractice(daily, settings.voiceEnabled);
+        markTodayAwaitingPlay(daily.id);
+        setPracticeStarted(false);
       }
     }
   });
@@ -226,7 +247,7 @@ const Today: React.FC = () => {
     }
   }, [affirmation, custom, settings.focusCategories]);
 
-  if (showTodayLoader || !affirmation) {
+  if (!affirmation) {
     return (
       <IonPage>
         <IonContent fullscreen className="today-content">
@@ -245,6 +266,12 @@ const Today: React.FC = () => {
     }
 
     if (settings.voiceEnabled) {
+      if (!practiceStarted) {
+        const practice = recordPractice();
+        setStreak(practice.currentStreak);
+        markTodayPracticeStarted(affirmation.id);
+        setPracticeStarted(true);
+      }
       speakDailyAffirmation(affirmation, () => {
         setSessionComplete(true);
         window.setTimeout(() => setSessionComplete(false), 3000);
@@ -258,7 +285,8 @@ const Today: React.FC = () => {
   const handleNewAffirmation = async () => {
     if (generatingAffirmation) return;
 
-    handleStop();
+    stopSpeaking();
+    endVoicePractice();
     setGeneratingAffirmation(true);
     setSessionComplete(false);
 
@@ -326,8 +354,18 @@ const Today: React.FC = () => {
       ? volumeHigh
       : play;
 
+  if (isFirstTodayVisit && introLoaderPhase !== 'hidden') {
+    return (
+      <IonPage>
+        <IonContent fullscreen className="today-content">
+          <AppLogoLoader exiting={introLoaderPhase === 'exit'} />
+        </IonContent>
+      </IonPage>
+    );
+  }
+
   return (
-    <IonPage>
+    <IonPage className={isFirstTodayVisit ? 'today-page--enter' : undefined}>
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start" className="today-header-logo">

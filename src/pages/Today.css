@@ -2,6 +2,26 @@
   --background: var(--ion-background-color);
 }
 
+.today-page--enter .today-content {
+  animation: today-page-enter 0.4s ease;
+}
+
+@keyframes today-page-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today-page--enter .today-content {
+    animation: none;
+  }
+}
+
 .today-header-logo {
   margin-inline-start: 0.5rem;
 }

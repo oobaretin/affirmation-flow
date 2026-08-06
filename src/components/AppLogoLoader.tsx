@@ -4,20 +4,32 @@ import './AppLogoLoader.css';
 type AppLogoLoaderProps = {
   message?: string;
   size?: 'md' | 'lg';
+  exiting?: boolean;
 };
 
-const AppLogoLoader: React.FC<AppLogoLoaderProps> = ({ message, size = 'lg' }) => (
-  <div className="app-logo-loader" role="status" aria-live="polite" aria-busy="true">
-    <div className="app-logo-loader__stage">
-      <div className="app-logo-loader__aura" aria-hidden="true">
-        <span className="app-logo-loader__halo app-logo-loader__halo--near" />
-        <span className="app-logo-loader__halo app-logo-loader__halo--far" />
+const AppLogoLoader: React.FC<AppLogoLoaderProps> = ({
+  message,
+  size = 'lg',
+  exiting = false,
+}) => (
+  <div
+    className={`app-logo-loader-screen${exiting ? ' app-logo-loader-screen--exit' : ''}`}
+    role="status"
+    aria-live="polite"
+    aria-busy={!exiting}
+  >
+    <div className="app-logo-loader">
+      <div className="app-logo-loader__stage">
+        <div className="app-logo-loader__aura" aria-hidden="true">
+          <span className="app-logo-loader__halo app-logo-loader__halo--near" />
+          <span className="app-logo-loader__halo app-logo-loader__halo--far" />
+        </div>
+        <div className="app-logo-loader__mark">
+          <AppLogo size={size} />
+        </div>
       </div>
-      <div className="app-logo-loader__mark">
-        <AppLogo size={size} />
-      </div>
+      {message ? <p className="app-logo-loader__message">{message}</p> : null}
     </div>
-    {message ? <p className="app-logo-loader__message">{message}</p> : null}
   </div>
 );
 

@@ -1,17 +1,40 @@
 .my-affirmations-content {
-  --padding-bottom: 1.5rem;
+  --padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .saved-filter-chips {
   display: flex;
   gap: 0.5rem;
-  padding: 0.75rem 1rem 0.25rem;
+  padding: 0.75rem 1rem 0.5rem;
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--ion-background-color);
 }
 
 .saved-filter-chips ion-chip {
   margin: 0;
   cursor: pointer;
+}
+
+.affirmation-row {
+  --inner-padding-end: 0.25rem;
+  --inner-padding-start: 1rem;
+  --min-height: 3.75rem;
+  align-items: flex-start;
+}
+
+.affirmation-row::part(native) {
+  align-items: flex-start;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+.affirmation-row-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0 0.5rem 0 0;
 }
 
 .affirmation-row--speaking {
@@ -98,12 +121,16 @@
   font-size: 1rem;
   line-height: 1.5;
   font-weight: 400;
+  margin: 0;
+  white-space: normal;
 }
 
 .affirmation-row-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  display: inline-flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  margin: 0;
+  padding-top: 0.1rem;
 }
 
 .affirmation-row-action {
@@ -125,7 +152,14 @@
 }
 
 .affirmation-row .affirmation-row-text {
-  padding-right: 0.5rem;
+  padding-right: 0;
+}
+
+.my-affirmations-list {
+  margin: 0 0 0.5rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  background: transparent;
 }
 
 .custom-add-form {

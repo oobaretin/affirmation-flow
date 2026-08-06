@@ -1,4 +1,4 @@
-import { Redirect, Route } from 'react-router-dom';
+import { Redirect, Route, useLocation } from 'react-router-dom';
 import React from 'react';
 import {
   IonApp,
@@ -32,6 +32,7 @@ import { CustomAffirmationsProvider } from './hooks/useCustomAffirmations';
 import { FavoritesProvider } from './hooks/useFavorites';
 import { SubscriptionProvider, useSubscription } from './hooks/useSubscription';
 import { useKeyboardVisible } from './hooks/useKeyboardVisible';
+import { ensurePlaybackContinues } from './services/voice';
 import './App.css';
 
 import '@ionic/react/css/core.css';
@@ -49,6 +50,16 @@ import '@ionic/react/css/palettes/dark.system.css';
 import './theme/variables.css';
 
 setupIonicReact();
+
+const RoutePlaybackGuard: React.FC = () => {
+  const location = useLocation();
+
+  React.useEffect(() => {
+    ensurePlaybackContinues();
+  }, [location.pathname]);
+
+  return null;
+};
 
 const MainTabBar: React.FC = () => {
   const keyboardVisible = useKeyboardVisible();
@@ -125,7 +136,11 @@ const AppRoutes: React.FC = () => {
     );
   } else {
     content = (
-      <IonTabs>
+      <IonTabs
+        onIonTabsWillChange={() => {
+          ensurePlaybackContinues();
+        }}
+      >
         <IonRouterOutlet>
           <Route exact path="/today">
             <Today />
@@ -176,6 +191,7 @@ const App: React.FC = () => (
         <FavoritesProvider>
           <SubscriptionProvider>
             <IonReactRouter>
+              <RoutePlaybackGuard />
               <AppRoutes />
             </IonReactRouter>
           </SubscriptionProvider>

@@ -32,7 +32,7 @@ import { useSettings } from '../hooks/useSettings';
 import { shareAffirmation } from '../services/share';
 import { queueTodayAffirmation } from '../services/todaySelection';
 import { buildVoiceOptions } from '../services/voiceProfiles';
-import { getActiveSpeechText, isSpeaking, resumeSpeakingIfInterrupted, speakAffirmation, stopSpeaking } from '../services/voice';
+import { ensurePlaybackContinues, getActiveSpeechText, isSpeaking, speakAffirmation, stopSpeaking } from '../services/voice';
 import './MyAffirmations.css';
 
 type SavedFilter = 'all' | 'favorites' | 'custom';
@@ -80,10 +80,10 @@ function AffirmationRow({
       className={`affirmation-row${isSpeakingRow ? ' affirmation-row--speaking' : ''}`}
       onClick={() => onOpenActions(affirmation)}
     >
-      <IonLabel className="ion-text-wrap">
-        <h2 className="affirmation-row-text">{affirmation.text}</h2>
+      <IonLabel className="ion-text-wrap affirmation-row-label">
+        <p className="affirmation-row-text">{affirmation.text}</p>
       </IonLabel>
-      <div className="affirmation-row-actions" slot="end">
+      <IonButtons slot="end" className="affirmation-row-actions">
         <button
           type="button"
           className={`affirmation-row-action ${saved ? 'saved' : ''}`}
@@ -106,7 +106,7 @@ function AffirmationRow({
         >
           <IonIcon icon={ellipsisHorizontal} />
         </button>
-      </div>
+      </IonButtons>
     </IonItem>
   );
 }
@@ -124,7 +124,7 @@ const CustomAffirmationForm = memo(function CustomAffirmationForm({ onAdd }: Cus
     if (!modalOpen) return;
     const timer = window.setTimeout(() => {
       customInputRef.current?.focus();
-      resumeSpeakingIfInterrupted();
+      ensurePlaybackContinues();
     }, 150);
     return () => window.clearTimeout(timer);
   }, [modalOpen]);
@@ -153,12 +153,17 @@ const CustomAffirmationForm = memo(function CustomAffirmationForm({ onAdd }: Cus
   };
 
   const handleInputFocus = () => {
-    window.setTimeout(() => resumeSpeakingIfInterrupted(), 100);
+    window.setTimeout(() => ensurePlaybackContinues(), 100);
+  };
+
+  const handleInputChange = () => {
+    window.setTimeout(() => ensurePlaybackContinues(), 50);
   };
 
   const openModal = () => {
     setModalOpen(true);
-    window.setTimeout(() => resumeSpeakingIfInterrupted(), 150);
+    window.setTimeout(() => ensurePlaybackContinues(), 150);
+    window.setTimeout(() => ensurePlaybackContinues(), 400);
   };
 
   return (
@@ -202,6 +207,7 @@ const CustomAffirmationForm = memo(function CustomAffirmationForm({ onAdd }: Cus
             autoComplete="off"
             autoCorrect="on"
             onFocus={handleInputFocus}
+            onInput={handleInputChange}
           />
         </IonContent>
       </IonModal>
@@ -219,11 +225,18 @@ const MyAffirmations: React.FC = () => {
   const [actionTarget, setActionTarget] = useState<Affirmation | null>(null);
   const favoritesByCategory = useMemo(() => groupByCategory(favorites), [favorites]);
 
+  const handleFilterChange = useCallback((value: SavedFilter) => {
+    setFilter(value);
+    window.setTimeout(() => ensurePlaybackContinues(), 50);
+  }, []);
+
   const handleAddCustom = useCallback((text: string) => {
     addCustom(text);
   }, [addCustom]);
 
   useIonViewWillEnter(() => {
+    ensurePlaybackContinues();
+
     if (!isSpeaking()) {
       setSpeakingId(null);
       return;
@@ -359,7 +372,7 @@ const MyAffirmations: React.FC = () => {
               key={value}
               outline={filter !== value}
               color={filter === value ? 'primary' : undefined}
-              onClick={() => setFilter(value)}
+              onClick={() => handleFilterChange(value)}
             >
               {value === 'all' ? 'All' : value === 'favorites' ? 'Favorites' : 'Custom'}
             </IonChip>
@@ -367,11 +380,16 @@ const MyAffirmations: React.FC = () => {
         </div>
 
         {emptyAll ? (
-          <div className="my-affirmations-empty">
-            <IonIcon icon={heart} aria-hidden="true" />
-            <h3>Nothing saved yet</h3>
-            <p>Tap the heart on Today to save affirmations, or add your own below.</p>
-          </div>
+          <>
+            <div className="my-affirmations-empty">
+              <IonIcon icon={heart} aria-hidden="true" />
+              <h3>Nothing saved yet</h3>
+              <p>Tap the heart on Today to save affirmations, or add your own below.</p>
+            </div>
+            <section className="my-affirmations-section">
+              <CustomAffirmationForm onAdd={handleAddCustom} />
+            </section>
+          </>
         ) : (
           <>
             {showFavorites && favorites.length > 0 && (
@@ -383,7 +401,7 @@ const MyAffirmations: React.FC = () => {
                 {favoritesByCategory.map(([category, items]) => (
                   <div key={category} className="my-affirmations-category-group">
                     <h3 className="my-affirmations-category-label">{category}</h3>
-                    <IonList>
+                    <IonList lines="full" className="my-affirmations-list">
                       {items.map((affirmation) => (
                         <AffirmationRow
                           key={affirmation.id}
@@ -419,7 +437,7 @@ const MyAffirmations: React.FC = () => {
                     <p>Tap the button above to add your first one.</p>
                   </div>
                 ) : (
-                  <IonList>
+                  <IonList lines="full" className="my-affirmations-list">
                     {custom.map((affirmation) => (
                       <AffirmationRow
                         key={affirmation.id}
@@ -435,17 +453,6 @@ const MyAffirmations: React.FC = () => {
               </section>
             )}
           </>
-        )}
-
-        {!emptyAll && filter === 'custom' && custom.length === 0 && (
-          <section className="my-affirmations-section">
-            <CustomAffirmationForm onAdd={handleAddCustom} />
-            <div className="my-affirmations-empty">
-              <IonIcon icon={createOutline} aria-hidden="true" />
-              <h3>No custom affirmations yet</h3>
-              <p>Tap the button above to add your first one.</p>
-            </div>
-          </section>
         )}
 
         <IonActionSheet

@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { getTodayPracticeHint } from '../types/settings';
 
 describe('getTodayPracticeHint', () => {
-  it('returns null when voice is on (listen-only mode)', () => {
-    expect(getTodayPracticeHint(true, 'fixed', 3)).toBeNull();
-    expect(getTodayPracticeHint(true, 'unlimited', 3)).toBeNull();
+  it('guides voice playback repeat count', () => {
+    expect(getTodayPracticeHint(true, 'fixed', 3)).toBe('Plays 3x');
+    expect(getTodayPracticeHint(true, 'unlimited', 3)).toBe('Playing on loop');
   });
 
   it('guides silent mantra practice when voice is off', () => {

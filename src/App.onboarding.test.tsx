@@ -17,10 +17,16 @@ vi.mock('@capacitor/local-notifications', () => ({
   },
 }));
 
-vi.mock('@capacitor/haptics', () => ({
-  Haptics: { impact: vi.fn() },
-  ImpactStyle: { Medium: 'MEDIUM' },
-}));
+vi.mock('./services/voice', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./services/voice')>();
+  return {
+    ...actual,
+    previewVoice: vi.fn().mockResolvedValue(undefined),
+    stopSpeaking: vi.fn(),
+  };
+});
+
+import { previewVoice } from './services/voice';
 
 describe('App onboarding flow', () => {
   beforeEach(() => {
@@ -35,6 +41,10 @@ describe('App onboarding flow', () => {
     expect(focusCheckbox).toBeTruthy();
     await user.click(focusCheckbox!);
     await user.click(screen.getByText('Continue'));
+
+    await waitFor(() => {
+      expect(previewVoice).toHaveBeenCalled();
+    });
 
     await user.click(screen.getByText('Continue'));
 

@@ -1,10 +1,26 @@
+.app-logo-loader-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ion-background-color);
+  opacity: 1;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+
+.app-logo-loader-screen--exit {
+  opacity: 0;
+}
+
 .app-logo-loader {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
-  min-height: 100%;
   padding: 2rem 1.5rem;
   text-align: center;
 }
@@ -111,6 +127,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-logo-loader-screen {
+    transition: none;
+  }
+
   .app-logo-loader__mark,
   .app-logo-loader__mark .app-logo,
   .app-logo-loader__halo {

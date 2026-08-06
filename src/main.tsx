@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import App from './App';
-import { initVoiceKeyboardGuard } from './services/voice';
+import { initVoiceKeyboardGuard, initPersistentVoiceAudio, initVoicePlaybackGuard } from './services/voice';
 
 async function initNativePlugins() {
   if (!Capacitor.isNativePlatform()) return;
@@ -16,9 +16,12 @@ async function initNativePlugins() {
   }
 
   initVoiceKeyboardGuard();
+  initPersistentVoiceAudio();
 }
 
 initNativePlugins();
+initPersistentVoiceAudio();
+initVoicePlaybackGuard();
 
 const container = document.getElementById('root');
 const root = createRoot(container!);

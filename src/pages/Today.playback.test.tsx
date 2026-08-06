@@ -75,14 +75,23 @@ describe('Today playback UI', () => {
     resetTodayViewSession();
   });
 
-  it('auto-starts voice on first visit', async () => {
+  it('does not auto-start voice on first visit', async () => {
+    renderToday();
+
+    await screen.findByText('Listen now');
+    expect(voice.speakAffirmation).not.toHaveBeenCalled();
+  });
+
+  it('starts voice when Listen now is tapped', async () => {
     vi.mocked(voice.speakAffirmation).mockImplementation(
       () => new Promise<void>(() => {
         /* never resolves — simulates in-progress playback */
       }),
     );
 
+    const user = userEvent.setup();
     renderToday();
+    await user.click(await screen.findByText('Listen now'));
 
     await waitFor(() => {
       expect(voice.speakAffirmation).toHaveBeenCalled();
@@ -97,15 +106,17 @@ describe('Today playback UI', () => {
       }),
     );
 
+    const user = userEvent.setup();
     renderToday();
+    await user.click(await screen.findByText('Listen now'));
 
     expect(await screen.findByText('Pause')).toBeInTheDocument();
     expect(screen.queryByText(/Repeat to yourself/i)).not.toBeInTheDocument();
   });
 
-  it('shows practice again when voice is off after auto-start', async () => {
+  it('shows begin today when voice is off on first visit', async () => {
     renderToday(false);
-    expect(await screen.findByText('Practice again')).toBeInTheDocument();
+    expect(await screen.findByText('Begin today')).toBeInTheDocument();
     expect(screen.getByText('Repeat to yourself 3x')).toBeInTheDocument();
   });
 
@@ -117,7 +128,9 @@ describe('Today playback UI', () => {
       },
     );
 
+    const user = userEvent.setup();
     renderToday();
+    await user.click(await screen.findByText('Listen now'));
 
     expect(await screen.findByText('Done for today')).toBeInTheDocument();
     expect(await screen.findByText('Listen again')).toBeInTheDocument();
@@ -133,6 +146,7 @@ describe('Today playback UI', () => {
 
     const user = userEvent.setup();
     renderToday();
+    await user.click(await screen.findByText('Listen now'));
     await user.click(await screen.findByText('Pause'));
 
     expect(stopSpy).toHaveBeenCalled();
