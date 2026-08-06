@@ -10,9 +10,9 @@ export default function Index() {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
   const { ready, settings } = useSettings();
-  const { isSubscribed } = useSubscription();
+  const { isSubscribed, loading: subscriptionLoading } = useSubscription();
 
-  if (!ready) {
+  if (!ready || subscriptionLoading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background }}>
         <ActivityIndicator color={palette.tint} />

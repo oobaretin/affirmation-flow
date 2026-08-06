@@ -12,6 +12,7 @@
       "bundleIdentifier": "com.affirmationflow.app"
     },
     "android": {
+      "package": "com.affirmationflow.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

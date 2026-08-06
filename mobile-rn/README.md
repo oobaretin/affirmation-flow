@@ -28,11 +28,25 @@ Press `i` in the Expo CLI if the simulator does not open automatically.
 |----------|---------|
 | `EXPO_PUBLIC_ELEVENLABS_API_KEY` | Premium voice (ElevenLabs) |
 | `EXPO_PUBLIC_OPENAI_API_KEY` | “Another line” AI generation |
+| `EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY` | RevenueCat iOS (App Store purchases) |
+| `EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY` | RevenueCat Android (Play Store) |
 | `EXPO_PUBLIC_SUBSCRIPTION_DEV_BYPASS=true` | Skip paywall in simulator |
+
+## RevenueCat / purchases
+
+RevenueCat **does not work in Expo Go**. Use a development build:
+
+```bash
+cd mobile-rn
+npx expo run:ios
+```
+
+For simulator testing without StoreKit, keep `EXPO_PUBLIC_SUBSCRIPTION_DEV_BYPASS=true`.
 
 ## What's ported
 
 - Onboarding (focus → listen → ready)
+- Paywall with RevenueCat purchase + restore
 - Today with auto-play, pause, favorites, another line
 - Saved (filters, custom affirmations)
 - Settings hub summary
@@ -40,7 +54,6 @@ Press `i` in the Expo CLI if the simulator does not open automatically.
 
 ## Not yet ported
 
-- RevenueCat purchases (paywall uses dev bypass for now)
 - Local notifications scheduling
 - Full Settings drill-in pages
 
