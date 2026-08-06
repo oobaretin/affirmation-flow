@@ -10,8 +10,9 @@
     "test.e2e": "cypress run",
     "test.unit": "vitest",
     "lint": "eslint",
-    "build:ios": "npm run build && npx cap sync ios",
-    "open:ios": "npx cap open ios",
+    "build:ios": "bash scripts/with-xcode.sh sh -c 'npm run build && npx cap sync ios'",
+    "open:ios": "bash scripts/open-ios.sh",
+    "simulator": "bash scripts/boot-simulator.sh",
     "screenshots": "node scripts/capture-screenshots.mjs"
   },
   "dependencies": {

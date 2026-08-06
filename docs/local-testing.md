@@ -20,15 +20,15 @@ Load your shell config once per terminal session (or paste the exports below):
 source ~/.zshrc
 ```
 
-Your `~/.zshrc` should include:
+Your `~/.zshrc` resolves **Xcode 16.1+** automatically (Downloads or `/Applications`):
 
 ```bash
 export PATH="$HOME/.gem/ruby/2.6.0/bin:$PATH"
-export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+export DEVELOPER_DIR="$(bash ~/affirmation-flow/scripts/resolve-developer-dir.sh)"
 export LANG=en_US.UTF-8
 ```
 
-Then build and open Xcode:
+Then build and open Xcode (uses **Xcode 16.1+** automatically when installed):
 
 ```bash
 cd /Users/osagieobaretin/affirmation-flow
@@ -36,7 +36,19 @@ npm run build:ios
 npm run open:ios
 ```
 
-In Xcode: pick an iPhone simulator → press **Run** (▶).
+`npm run build:ios` picks the newest Xcode 16.1+ via `scripts/resolve-developer-dir.sh`. To install 16.1 into `/Applications` (recommended for Xcode GUI):
+
+```bash
+bash scripts/install-xcode-16.1.sh
+```
+
+In Xcode: pick **iPhone 16 Pro Max (iOS 18.1)** → press **Run** (▶).
+
+Or boot the 18.1 simulator from the terminal first:
+
+```bash
+npm run simulator
+```
 
 ## 3. Test checklist
 
