@@ -22,16 +22,17 @@ Start your day with calm, spoken affirmations. Personalize your focus, build str
 
 AffirmEaze is your daily space for calm self-belief.
 
-Build a gentle daily practice with natural premium voices, personalized focus areas, saved favorites, custom affirmations, and streak tracking.
+Build a gentle daily practice with natural premium voices, personalized focus areas, a Library for browse/saved/custom lines, and streak tracking.
 
 **What’s included in Premium:**
 
 • Natural premium voices for every spoken affirmation  
 • One daily affirmation tailored to your focus areas  
 • Mantra-style repeats with calm delivery  
-• Saved favorites and custom affirmations  
+• Library — browse, save favorites, and add custom lines  
 • Daily reminders on your schedule  
 • Fresh lines with "Another line" on Today  
+• Home Screen widget for today’s line  
 • Everything stored privately on your device  
 
 AffirmEaze is designed to feel soft and unhurried — like a quiet moment before the day begins.
@@ -73,12 +74,13 @@ Optional — leave blank for v1 or use your future website.
 ## Review notes (paste into App Review Information)
 
 ```
-AffirmEaze is a subscription-only affirmation app.
+AffirmEaze is a subscription affirmation app with a short free preview.
 
 Flow:
-1. User completes onboarding (name, focus areas, voice/reminder preferences)
-2. User sees paywall, picks monthly or annual, and starts a 7-day free trial via Apple In-App Purchase
-3. After subscribing, user accesses Today, Saved, and Settings
+1. User completes onboarding (focus areas, voice, reminder preferences)
+2. User can try Today once (soft preview). After first practice completes, the paywall appears
+3. User picks monthly or annual and starts a 7-day free trial via Apple In-App Purchase
+4. After subscribing, user accesses Today, Library, and Settings
 
 No login or cloud account. Data is stored locally on device.
 "Lock App" in Settings returns user to a local lock screen; data remains on device.
@@ -87,6 +89,8 @@ Restore Purchases is on the paywall and in Settings → Subscription.
 Test subscription products:
 - com.affirmationflow.app.premium.monthly
 - com.affirmationflow.app.premium.yearly
+
+Dev builds may use VITE_SUBSCRIPTION_DEV_BYPASS — disable that for App Review builds.
 ```
 
 ## Subscription display names (App Store Connect)
@@ -96,6 +100,6 @@ Test subscription products:
 | `com.affirmationflow.app.premium.monthly` | AffirmEaze Premium Monthly | $4.99 |
 | `com.affirmationflow.app.premium.yearly` | AffirmEaze Premium Annual | $39.99 |
 
-**Monthly description:** Full access — natural premium voices, daily affirmations, saved favorites, AI, and reminders.
+**Monthly description:** Full access — natural premium voices, daily affirmations, Library, and reminders.
 
 **Annual description:** Full access with natural premium voices. Best value — save vs monthly.
