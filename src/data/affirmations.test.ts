@@ -5,7 +5,7 @@ describe('affirmation selection', () => {
   it('filters pool by focus categories', () => {
     const filtered = filterByFocus(AFFIRMATIONS, ['Peace']);
     expect(filtered.every((item) => item.category === 'Peace')).toBe(true);
-    expect(filtered.length).toBe(5);
+    expect(filtered.length).toBe(10);
   });
 
   it('falls back to full pool when focus filter is empty', () => {

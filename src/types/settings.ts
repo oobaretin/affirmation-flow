@@ -23,6 +23,23 @@ export interface UserSettings {
 
 export const MANTRA_COUNTS = [3, 7, 21, 108] as const;
 
+export const PRACTICE_PRESETS = [
+  { id: 'quick', label: 'Quick', description: '1× — a single listen', count: 1, mode: 'fixed' as const },
+  { id: 'daily', label: 'Daily', description: '3× — your everyday ritual', count: 3, mode: 'fixed' as const },
+  { id: 'deep', label: 'Deep', description: '7× — slower, fuller practice', count: 7, mode: 'fixed' as const },
+] as const;
+
+export type PracticePresetId = (typeof PRACTICE_PRESETS)[number]['id'];
+
+export function matchPracticePreset(
+  mode: RepeatMode,
+  count: number,
+): PracticePresetId | 'custom' {
+  if (mode === 'unlimited') return 'custom';
+  const preset = PRACTICE_PRESETS.find((item) => item.count === count);
+  return preset?.id ?? 'custom';
+}
+
 export const DEFAULT_SETTINGS: UserSettings = {
   name: '',
   onboardingComplete: false,
@@ -45,14 +62,24 @@ export function formatRepeatLabel(mode: RepeatMode, count: number): string {
   return `${count}x`;
 }
 
+export type PracticeProgress = {
+  current: number;
+  total: number;
+  fraction?: number;
+};
+
 /** Practice repeat guidance on Today (voice and silent modes). */
 export function getTodayPracticeHint(
   voiceEnabled: boolean,
   repeatMode: RepeatMode,
   repeatCount: number,
+  progress?: PracticeProgress | null,
 ): string | null {
   if (voiceEnabled) {
     if (repeatMode === 'unlimited') return 'Playing on loop';
+    if (progress && progress.total > 0) {
+      return `Playing ${progress.current} of ${progress.total}`;
+    }
     return `Plays ${formatRepeatLabel(repeatMode, repeatCount)}`;
   }
 

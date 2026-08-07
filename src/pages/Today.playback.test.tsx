@@ -8,8 +8,10 @@ import Today from './Today';
 import { SettingsProvider } from '../hooks/useSettings';
 import { CustomAffirmationsProvider } from '../hooks/useCustomAffirmations';
 import { FavoritesProvider } from '../hooks/useFavorites';
+import { SubscriptionProvider } from '../hooks/useSubscription';
 import { resetTodayViewSession } from '../services/todayViewSession';
 import * as voice from '../services/voice';
+import { resetFreePreview } from '../services/freePreview';
 
 vi.mock('../hooks/useMinimumLoaderDuration', () => ({
   useMinimumLoaderDuration: (isLoading: boolean) => isLoading,
@@ -57,11 +59,13 @@ function renderToday(voiceEnabled = true) {
       <SettingsProvider>
         <CustomAffirmationsProvider>
           <FavoritesProvider>
-            <MemoryRouter initialEntries={['/today']}>
-              <Route path="/today">
-                <Today />
-              </Route>
-            </MemoryRouter>
+            <SubscriptionProvider>
+              <MemoryRouter initialEntries={['/today']}>
+                <Route path="/today">
+                  <Today />
+                </Route>
+              </MemoryRouter>
+            </SubscriptionProvider>
           </FavoritesProvider>
         </CustomAffirmationsProvider>
       </SettingsProvider>
@@ -73,6 +77,7 @@ describe('Today playback UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetTodayViewSession();
+    resetFreePreview();
   });
 
   it('does not auto-start voice on first visit', async () => {
@@ -96,10 +101,10 @@ describe('Today playback UI', () => {
     await waitFor(() => {
       expect(voice.speakAffirmation).toHaveBeenCalled();
     });
-    expect(await screen.findByText('Pause')).toBeInTheDocument();
+    expect(await screen.findByText('Stop')).toBeInTheDocument();
   });
 
-  it('shows pause while speech is in progress', async () => {
+  it('shows stop while speech is in progress', async () => {
     vi.mocked(voice.speakAffirmation).mockImplementation(
       () => new Promise<void>(() => {
         /* never resolves */
@@ -110,7 +115,7 @@ describe('Today playback UI', () => {
     renderToday();
     await user.click(await screen.findByText('Listen now'));
 
-    expect(await screen.findByText('Pause')).toBeInTheDocument();
+    expect(await screen.findByText('Stop')).toBeInTheDocument();
     expect(screen.queryByText(/Repeat to yourself/i)).not.toBeInTheDocument();
   });
 
@@ -136,7 +141,7 @@ describe('Today playback UI', () => {
     expect(await screen.findByText('Listen again')).toBeInTheDocument();
   });
 
-  it('pauses when the primary button is tapped during playback', async () => {
+  it('stops when the primary button is tapped during playback', async () => {
     vi.mocked(voice.speakAffirmation).mockImplementation(
       () => new Promise<void>(() => {
         /* never resolves */
@@ -147,7 +152,7 @@ describe('Today playback UI', () => {
     const user = userEvent.setup();
     renderToday();
     await user.click(await screen.findByText('Listen now'));
-    await user.click(await screen.findByText('Pause'));
+    await user.click(await screen.findByText('Stop'));
 
     expect(stopSpy).toHaveBeenCalled();
   });

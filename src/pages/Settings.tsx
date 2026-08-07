@@ -28,6 +28,8 @@ import {
   formatRenewalDate,
   getHubSummary,
   getPracticeSummary,
+  getRemindersSummary,
+  getVoiceSummary,
 } from './settings/settingsSummaries';
 import './Settings.css';
 
@@ -69,7 +71,7 @@ const Settings: React.FC = () => {
 
   const subscriptionSummary = isSubscribed
     ? `Premium ${status.plan === 'yearly' ? 'Annual' : 'Monthly'} · Renews ${formatRenewalDate(status.expirationDate)}`
-    : 'Premium subscription required';
+    : 'Start your free trial';
 
   return (
     <IonPage>
@@ -104,11 +106,21 @@ const Settings: React.FC = () => {
 
         <p className="settings-group-label">Preferences</p>
         <IonList inset className="settings-menu-list">
-          <SettingsRow title="Account" detail={subscriptionSummary} path="/settings/subscription" />
+          <SettingsRow
+            title="Account"
+            detail={subscriptionSummary}
+            path={isSubscribed ? '/settings/subscription' : '/paywall'}
+          />
           <SettingsRow
             title="Your Practice"
-            detail={`${getPracticeSummary(settings)} · Voice & reminders`}
+            detail={getPracticeSummary(settings)}
             path="/settings/practice"
+          />
+          <SettingsRow title="Voice" detail={getVoiceSummary(settings)} path="/settings/voice" />
+          <SettingsRow
+            title="Reminders"
+            detail={getRemindersSummary(settings)}
+            path="/settings/reminders"
           />
           <SettingsRow title="Focus Areas" detail={formatFocusSummary(settings.focusCategories)} path="/settings/focus" />
         </IonList>

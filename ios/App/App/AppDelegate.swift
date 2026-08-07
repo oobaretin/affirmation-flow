@@ -10,7 +10,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func configureAudioSession() {
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers])
+            // Exclusive spoken playback so iOS can own Now Playing / lock-screen controls.
+            try session.setCategory(.playback, mode: .spokenAudio, options: [])
             try session.setActive(true)
         } catch {
             NSLog("AffirmEaze audio session setup failed: \(error.localizedDescription)")

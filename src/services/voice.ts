@@ -11,7 +11,20 @@ import {
 } from './elevenLabs';
 import { Capacitor } from '@capacitor/core';
 import { Keyboard } from '@capacitor/keyboard';
+import {
+  clearMediaSession,
+  initMediaSessionHandlers,
+  updateMediaSessionMetadata,
+  updateMediaSessionPosition,
+  updateMediaSessionState,
+} from './mediaSession';
 import { getTodayViewSession, getTodayVoiceSnapshot, setTodayVoiceSnapshot } from './todayViewSession';
+
+export type SpeakProgress = {
+  current: number;
+  total: number;
+  fraction?: number;
+};
 
 type SavedPlayback = {
   text: string;
@@ -19,6 +32,7 @@ type SavedPlayback = {
   unlimited: boolean;
   options: VoiceOptions;
   onComplete?: () => void;
+  onProgress?: (progress: SpeakProgress) => void;
 };
 
 let activeUtterances = 0;
@@ -48,6 +62,8 @@ let cachedBufferText: string | null = null;
 let nativePlaybackStartedAt = 0;
 let nativePlaybackDurationMs = 0;
 let nativePlaybackEndResolve: (() => void) | null = null;
+let userPausedPlayback = false;
+let mediaSessionBootstrapped = false;
 
 function useNativeBufferPlayback(): boolean {
   // BufferSource playback is unreliable in iOS WKWebView.
@@ -242,10 +258,38 @@ export function stopSpeaking(): void {
   savedPlayback = null;
   resumeInFlight = false;
   loopRunningGeneration = null;
+  userPausedPlayback = false;
   setTodayVoiceSnapshot(null);
   stopAudioPlayback();
   clearCachedAudio();
   activeUtterances = 0;
+  clearMediaSession();
+}
+
+export function pauseSpeaking(): void {
+  if (!activeAudio || activeAudio.paused) return;
+  userPausedPlayback = true;
+  activeAudio.pause();
+  updateMediaSessionState('paused');
+}
+
+export function resumeSpeaking(): void {
+  if (!savedPlayback && !activeText) return;
+  userPausedPlayback = false;
+  if (activeAudio && activeAudio.paused && !activeAudio.ended) {
+    void activeAudio.play().then(() => {
+      updateMediaSessionState('playing');
+    }).catch(() => {
+      ensurePlaybackContinues();
+    });
+    return;
+  }
+  ensurePlaybackContinues();
+  updateMediaSessionState('playing');
+}
+
+export function isPlaybackPaused(): boolean {
+  return userPausedPlayback;
 }
 
 export function getActiveSpeechText(): string | null {
@@ -253,6 +297,7 @@ export function getActiveSpeechText(): string | null {
 }
 
 export function resumeSpeakingIfInterrupted(): void {
+  if (userPausedPlayback) return;
   if (useNativeMediaElementBoost() && audioContext?.state === 'suspended') {
     void audioContext.resume();
   }
@@ -278,7 +323,7 @@ async function restartPlaybackLoop(generation: number): Promise<void> {
   if (!savedPlayback || !isActiveGeneration(generation)) return;
 
   loopRunningGeneration = generation;
-  const { text, repeatCount, unlimited, options, onComplete } = savedPlayback;
+  const { text, repeatCount, unlimited, options, onComplete, onProgress } = savedPlayback;
   activeText = text;
   unlimitedLoop = unlimited;
   playbackCancelled = false;
@@ -313,9 +358,16 @@ async function restartPlaybackLoop(generation: number): Promise<void> {
 
   try {
     if (unlimited) {
+      let loopIndex = 0;
       while (unlimitedLoop && isActiveGeneration(generation)) {
+        loopIndex += 1;
+        onProgress?.({ current: loopIndex, total: 0, fraction: 0 });
+        updateMediaSessionMetadata(text, `Loop ${loopIndex}`);
+        updateMediaSessionState('playing');
         activeUtterances += 1;
-        await playAudioUrl(audioUrl, options.volume, generation);
+        await playAudioUrl(audioUrl, options.volume, generation, (fraction) => {
+          onProgress?.({ current: loopIndex, total: 0, fraction });
+        });
         activeUtterances = Math.max(0, activeUtterances - 1);
         if (!unlimitedLoop || !isActiveGeneration(generation)) break;
         await sleep(options.pauseMs, generation);
@@ -324,8 +376,13 @@ async function restartPlaybackLoop(generation: number): Promise<void> {
       for (let index = 0; index < count; index += 1) {
         if (!isActiveGeneration(generation)) break;
 
+        onProgress?.({ current: index + 1, total: count, fraction: 0 });
+        updateMediaSessionMetadata(text, `${index + 1} of ${count}`);
+        updateMediaSessionState('playing');
         activeUtterances += 1;
-        await playAudioUrl(audioUrl, options.volume, generation);
+        await playAudioUrl(audioUrl, options.volume, generation, (fraction) => {
+          onProgress?.({ current: index + 1, total: count, fraction });
+        });
         activeUtterances = Math.max(0, activeUtterances - 1);
 
         if (!isActiveGeneration(generation) || index >= count - 1) break;
@@ -340,6 +397,7 @@ async function restartPlaybackLoop(generation: number): Promise<void> {
     savedPlayback = null;
     setTodayVoiceSnapshot(null);
     clearCachedAudio();
+    clearMediaSession();
     onComplete?.();
   } catch (error) {
     if (!isActiveGeneration(generation) || playbackCancelled) return;
@@ -356,6 +414,7 @@ async function restartPlaybackLoop(generation: number): Promise<void> {
 }
 
 export function ensurePlaybackContinues(): void {
+  if (userPausedPlayback) return;
   rehydrateSavedPlaybackFromSession();
 
   const session = getTodayViewSession();
@@ -433,6 +492,15 @@ export function initPersistentVoiceAudio(): void {
 export function initVoicePlaybackGuard(): void {
   if (typeof document === 'undefined') return;
 
+  if (!mediaSessionBootstrapped) {
+    mediaSessionBootstrapped = true;
+    initMediaSessionHandlers({
+      onPlay: () => resumeSpeaking(),
+      onPause: () => pauseSpeaking(),
+      onStop: () => stopSpeaking(),
+    });
+  }
+
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       ensurePlaybackContinues();
@@ -442,9 +510,10 @@ export function initVoicePlaybackGuard(): void {
 
 function attachPlaybackResumeHandler(audio: HTMLAudioElement, generation: number): () => void {
   const handlePause = () => {
-    if (!isActiveGeneration(generation) || audio.ended) return;
+    if (!isActiveGeneration(generation) || audio.ended || userPausedPlayback) return;
     window.setTimeout(() => {
       if (!isActiveGeneration(generation) || activeAudio !== audio || audio.ended) return;
+      if (userPausedPlayback) return;
       if (audio.paused) resumeSpeakingIfInterrupted();
     }, 50);
   };
@@ -546,7 +615,12 @@ function playAudioUrlNative(url: string, volume: number, generation: number): Pr
   });
 }
 
-function playAudioUrl(url: string, volume: number, generation: number): Promise<void> {
+function playAudioUrl(
+  url: string,
+  volume: number,
+  generation: number,
+  onFraction?: (fraction: number) => void,
+): Promise<void> {
   if (useNativeBufferPlayback()) {
     return playAudioUrlNative(url, volume, generation);
   }
@@ -558,6 +632,7 @@ function playAudioUrl(url: string, volume: number, generation: number): Promise<
     }
 
     stopAllAudioElements();
+    userPausedPlayback = false;
 
     const audio = getPersistentAudio();
     wireMediaElementToAudioContext(audio);
@@ -595,6 +670,7 @@ function playAudioUrl(url: string, volume: number, generation: number): Promise<
     };
 
     audio.onended = () => {
+      onFraction?.(1);
       finishAndClearWatch();
     };
 
@@ -604,7 +680,15 @@ function playAudioUrl(url: string, volume: number, generation: number): Promise<
       }
     };
 
-    audio.ontimeupdate = () => markAudioProgress(audio);
+    audio.ontimeupdate = () => {
+      markAudioProgress(audio);
+      const duration = audio.duration;
+      if (Number.isFinite(duration) && duration > 0) {
+        const fraction = Math.min(1, Math.max(0, audio.currentTime / duration));
+        onFraction?.(fraction);
+        updateMediaSessionPosition(audio.currentTime, duration);
+      }
+    };
 
     audio.src = url;
     audio.load();
@@ -619,6 +703,7 @@ function playAudioUrl(url: string, volume: number, generation: number): Promise<
 
       void audio.play().then(() => {
         lastAudioProgressAt = Date.now();
+        updateMediaSessionState('playing');
       }).catch(() => {
         if (!isActiveGeneration(generation) || settled) {
           finishAndClearWatch();
@@ -643,6 +728,7 @@ async function speakAffirmationElevenLabs(
   unlimited = false,
   options: VoiceOptions = getVoiceOptions('soothing'),
   persistSession = true,
+  onProgress?: (progress: SpeakProgress) => void,
 ): Promise<void> {
   if (cachedAudioText !== text) {
     clearCachedAudio();
@@ -651,7 +737,7 @@ async function speakAffirmationElevenLabs(
   const generation = beginNewPlaybackSession();
   activeText = text;
   unlimitedLoop = unlimited;
-  savedPlayback = { text, repeatCount, unlimited, options, onComplete };
+  savedPlayback = { text, repeatCount, unlimited, options, onComplete, onProgress };
   if (persistSession) {
     setTodayVoiceSnapshot({
       text,
@@ -688,15 +774,24 @@ export function speakAffirmation(
   onComplete?: () => void,
   unlimited = false,
   options: VoiceOptions = getVoiceOptions('soothing'),
+  onProgress?: (progress: SpeakProgress) => void,
 ): Promise<void> {
   if (!isElevenLabsConfigured()) {
     return Promise.reject(new Error('Premium voice is not configured.'));
   }
 
-  return speakAffirmationElevenLabs(text, repeatCount, onComplete, unlimited, {
-    ...options,
-    useElevenLabs: true,
-  }).catch((error) => {
+  return speakAffirmationElevenLabs(
+    text,
+    repeatCount,
+    onComplete,
+    unlimited,
+    {
+      ...options,
+      useElevenLabs: true,
+    },
+    true,
+    onProgress,
+  ).catch((error) => {
     if (playbackCancelled) {
       return;
     }

@@ -129,6 +129,76 @@ const Paywall: React.FC = () => {
           </p>
           <p className="paywall-trial-headline">{SUBSCRIPTION_TRIAL_HEADLINE}</p>
 
+          <div className="paywall-plans">
+            <button
+              type="button"
+              className={`paywall-plan ${selectedPlan === 'yearly' ? 'selected' : ''}`}
+              onClick={() => setSelectedPlan('yearly')}
+            >
+              <div className="paywall-plan-header">
+                <strong>{SUBSCRIPTION_DISPLAY.yearly.label}</strong>
+                <span className="paywall-badge">{SUBSCRIPTION_DISPLAY.yearly.savingsLabel}</span>
+              </div>
+              <p className="paywall-price">
+                {yearlyPrice}
+                <span> / {formatPackagePeriod('yearly')}</span>
+              </p>
+              <p className="paywall-plan-equivalent">
+                {YEARLY_MONTHLY_EQUIVALENT}/mo billed annually
+              </p>
+              <p className="paywall-plan-trial">{yearlyTrialNote}</p>
+            </button>
+
+            <button
+              type="button"
+              className={`paywall-plan ${selectedPlan === 'monthly' ? 'selected' : ''}`}
+              onClick={() => setSelectedPlan('monthly')}
+            >
+              <div className="paywall-plan-header">
+                <strong>{SUBSCRIPTION_DISPLAY.monthly.label}</strong>
+              </div>
+              <p className="paywall-price">
+                {monthlyPrice}
+                <span> / {formatPackagePeriod('monthly')}</span>
+              </p>
+              <p className="paywall-plan-trial">{monthlyTrialNote}</p>
+            </button>
+          </div>
+
+          {!nativePurchasesEnabled && !devBypassEnabled && (
+            <p className="paywall-note">
+              Subscriptions are processed through the App Store in the iOS app.
+            </p>
+          )}
+
+          {devBypassEnabled && isSubscriptionDevBypass() && (
+            <p className="paywall-note">Developer bypass is enabled for local testing.</p>
+          )}
+
+          {error && (
+            <IonText color="danger">
+              <p className="paywall-error">{error}</p>
+            </IonText>
+          )}
+
+          <IonButton
+            expand="block"
+            className="paywall-primary-btn"
+            disabled={purchasing || (!nativePurchasesEnabled && !devBypassEnabled)}
+            onClick={() => void handlePurchase()}
+          >
+            {purchasing ? 'Processing...' : 'Start 7-Day Free Trial'}
+          </IonButton>
+
+          <IonButton
+            expand="block"
+            fill="clear"
+            disabled={purchasing || (!nativePurchasesEnabled && !devBypassEnabled)}
+            onClick={() => void handleRestore()}
+          >
+            Restore Purchases
+          </IonButton>
+
           {voiceReady && (
             <div className="paywall-preview">
               <p className="paywall-preview-label">{greeting}</p>
@@ -155,84 +225,17 @@ const Paywall: React.FC = () => {
             </div>
           )}
 
-          <ul className="paywall-features">
-            {PAYWALL_FEATURES.map((feature) => (
-              <li key={feature}>
-                <IonIcon icon={checkmarkCircle} aria-hidden="true" />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="paywall-plans">
-                <button
-                  type="button"
-                  className={`paywall-plan ${selectedPlan === 'yearly' ? 'selected' : ''}`}
-                  onClick={() => setSelectedPlan('yearly')}
-                >
-                  <div className="paywall-plan-header">
-                    <strong>{SUBSCRIPTION_DISPLAY.yearly.label}</strong>
-                    <span className="paywall-badge">{SUBSCRIPTION_DISPLAY.yearly.savingsLabel}</span>
-                  </div>
-                  <p className="paywall-price">
-                    {yearlyPrice}
-                    <span> / {formatPackagePeriod('yearly')}</span>
-                  </p>
-                  <p className="paywall-plan-equivalent">
-                    {YEARLY_MONTHLY_EQUIVALENT}/mo billed annually
-                  </p>
-                  <p className="paywall-plan-trial">{yearlyTrialNote}</p>
-                </button>
-
-                <button
-                  type="button"
-                  className={`paywall-plan ${selectedPlan === 'monthly' ? 'selected' : ''}`}
-                  onClick={() => setSelectedPlan('monthly')}
-                >
-                  <div className="paywall-plan-header">
-                    <strong>{SUBSCRIPTION_DISPLAY.monthly.label}</strong>
-                  </div>
-                  <p className="paywall-price">
-                    {monthlyPrice}
-                    <span> / {formatPackagePeriod('monthly')}</span>
-                  </p>
-                  <p className="paywall-plan-trial">{monthlyTrialNote}</p>
-                </button>
-              </div>
-
-              {!nativePurchasesEnabled && !devBypassEnabled && (
-                <p className="paywall-note">
-                  Subscriptions are processed through the App Store in the iOS app.
-                </p>
-              )}
-
-              {devBypassEnabled && isSubscriptionDevBypass() && (
-                <p className="paywall-note">Developer bypass is enabled for local testing.</p>
-              )}
-
-              {error && (
-                <IonText color="danger">
-                  <p className="paywall-error">{error}</p>
-                </IonText>
-              )}
-
-              <IonButton
-                expand="block"
-                className="paywall-primary-btn"
-                disabled={purchasing || (!nativePurchasesEnabled && !devBypassEnabled)}
-                onClick={() => void handlePurchase()}
-              >
-                {purchasing ? 'Processing...' : 'Start 7-Day Free Trial'}
-              </IonButton>
-
-              <IonButton
-                expand="block"
-                fill="clear"
-                disabled={purchasing || (!nativePurchasesEnabled && !devBypassEnabled)}
-                onClick={() => void handleRestore()}
-              >
-                Restore Purchases
-              </IonButton>
+          <details className="paywall-details">
+            <summary>What&apos;s included</summary>
+            <ul className="paywall-features">
+              {PAYWALL_FEATURES.map((feature) => (
+                <li key={feature}>
+                  <IonIcon icon={checkmarkCircle} aria-hidden="true" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
 
           <IonButton expand="block" fill="clear" onClick={() => openExternalUrl(PRIVACY_POLICY_URL)}>
             Privacy Policy

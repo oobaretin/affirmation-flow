@@ -3,6 +3,11 @@
   --brand-mark: #ffffff;
   --brand-glow: rgba(124, 92, 191, 0.2);
 
+  --font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+  --font-ui: 'Outfit', 'Avenir Next', 'Segoe UI', sans-serif;
+
+  --ion-font-family: var(--font-ui);
+
   --ion-color-primary: #7c5cbf;
   --ion-color-primary-rgb: 124, 92, 191;
   --ion-color-primary-contrast: #ffffff;

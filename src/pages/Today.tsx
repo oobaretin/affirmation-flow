@@ -10,16 +10,17 @@ import {
   IonSpinner,
   IonText,
   IonTitle,
+  IonToast,
   IonToolbar,
   useIonViewWillEnter,
 } from '@ionic/react';
 import {
   heart,
   heartOutline,
-  pause,
   play,
   refresh,
   shareOutline,
+  stopCircle,
   volumeHigh,
 } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -34,16 +35,19 @@ import {
 } from '../data/affirmations';
 import { useCustomAffirmations } from '../hooks/useCustomAffirmations';
 import { useFavorites } from '../hooks/useFavorites';
-import { getTodayPracticeHint } from '../types/settings';
+import { useFreePreview } from '../hooks/useFreePreview';
+import { getTodayPracticeHint, type PracticeProgress } from '../types/settings';
 import { useSettings } from '../hooks/useSettings';
+import { useSubscription } from '../hooks/useSubscription';
 import { shareAffirmation } from '../services/share';
 import { generateNextAffirmation, isOpenAiConfigured } from '../services/aiAffirmations';
-import { getStreak, recordPractice } from '../services/streak';
+import { getStreak, getWeekPracticeHistory, recordPractice } from '../services/streak';
 import {
   getPinnedAffirmationForToday,
   isPinnedToday,
 } from '../services/todayAffirmation';
 import { consumeQueuedTodayAffirmation } from '../services/todaySelection';
+import { getSeenAffirmationIds, markAffirmationSeen } from '../services/seenAffirmations';
 import {
   getTodayViewSession,
   markTodayAwaitingPlay,
@@ -52,6 +56,7 @@ import {
 } from '../services/todayViewSession';
 import { buildVoiceOptions } from '../services/voiceProfiles';
 import { ensurePlaybackContinues, getActiveSpeechText, isSpeaking, speakAffirmation, stopSpeaking } from '../services/voice';
+import { updateTodayWidget } from '../services/todayWidget';
 import { getTimeAwareGreeting } from '../utils/greeting';
 import './Today.css';
 
@@ -63,6 +68,8 @@ const Today: React.FC = () => {
   const history = useHistory();
   const location = useLocation<TodayLocationState>();
   const { settings } = useSettings();
+  const { isSubscribed } = useSubscription();
+  const { freePreviewConsumed, consumeFreePreview } = useFreePreview();
   const { custom } = useCustomAffirmations();
   const [affirmation, setAffirmation] = useState<Affirmation | null>(null);
   const [voicePracticeActive, setVoicePracticeActive] = useState(
@@ -72,9 +79,12 @@ const Today: React.FC = () => {
     () => !getTodayViewSession().awaitingPlay,
   );
   const [streak, setStreak] = useState(0);
-  const [shareToast, setShareToast] = useState('');
+  const [weekHistory, setWeekHistory] = useState(() => getWeekPracticeHistory());
+  const [toastMessage, setToastMessage] = useState('');
   const [sessionComplete, setSessionComplete] = useState(false);
   const [generatingAffirmation, setGeneratingAffirmation] = useState(false);
+  const [generateError, setGenerateError] = useState('');
+  const [playProgress, setPlayProgress] = useState<PracticeProgress | null>(null);
   const { isFavorite, toggleFavorite } = useFavorites();
   const [isFirstTodayVisit] = useState(() => !getTodayViewSession().initialized);
   const loaderVisible = useMinimumLoaderDuration(
@@ -84,6 +94,14 @@ const Today: React.FC = () => {
   const [introLoaderPhase, setIntroLoaderPhase] = useState<'visible' | 'exit' | 'hidden'>(
     isFirstTodayVisit ? 'visible' : 'hidden',
   );
+
+  useEffect(() => {
+    if (!affirmation) return;
+    void updateTodayWidget({
+      text: affirmation.text,
+      category: affirmation.category,
+    });
+  }, [affirmation]);
 
   useEffect(() => {
     if (!isFirstTodayVisit || !affirmation) return;
@@ -102,9 +120,17 @@ const Today: React.FC = () => {
   const pinned = isPinnedToday(affirmation?.id ?? '');
   const voiceOptions = buildVoiceOptions(settings);
 
+  const finishFreePreviewIfNeeded = () => {
+    if (isSubscribed || freePreviewConsumed) return;
+    window.setTimeout(() => {
+      consumeFreePreview();
+    }, 1600);
+  };
+
   const endVoicePractice = () => {
     setTodayVoicePracticeActive(false);
     setVoicePracticeActive(false);
+    setPlayProgress(null);
   };
 
   const beginVoicePractice = () => {
@@ -116,6 +142,7 @@ const Today: React.FC = () => {
     stopSpeaking();
     endVoicePractice();
     setSessionComplete(true);
+    finishFreePreviewIfNeeded();
     window.setTimeout(() => setSessionComplete(false), 3000);
   };
 
@@ -124,6 +151,11 @@ const Today: React.FC = () => {
 
     beginVoicePractice();
     const unlimited = settings.repeatMode === 'unlimited';
+    setPlayProgress(
+      unlimited
+        ? { current: 1, total: 0 }
+        : { current: 1, total: settings.repeatCount },
+    );
     speakAffirmation(
       daily.text,
       settings.repeatCount,
@@ -133,6 +165,7 @@ const Today: React.FC = () => {
       },
       unlimited,
       voiceOptions,
+      (progress) => setPlayProgress(progress),
     ).catch(() => {
       if (getTodayViewSession().voicePracticeActive) {
         ensurePlaybackContinues();
@@ -145,14 +178,18 @@ const Today: React.FC = () => {
   const startPractice = async (daily: Affirmation, withVoice: boolean) => {
     const practice = recordPractice();
     setStreak(practice.currentStreak);
+    setWeekHistory(getWeekPracticeHistory());
     markTodayPracticeStarted(daily.id);
     setPracticeStarted(true);
 
     if (withVoice && settings.voiceEnabled) {
       speakDailyAffirmation(daily, () => {
         setSessionComplete(true);
+        finishFreePreviewIfNeeded();
         window.setTimeout(() => setSessionComplete(false), 3000);
       });
+    } else {
+      finishFreePreviewIfNeeded();
     }
 
     try {
@@ -183,6 +220,7 @@ const Today: React.FC = () => {
 
     if (passed) {
       setAffirmation(passed);
+      markAffirmationSeen(passed.id);
       markTodayAwaitingPlay(passed.id);
       setPracticeStarted(false);
       history.replace('/today');
@@ -192,6 +230,7 @@ const Today: React.FC = () => {
     const pinnedToday = getPinnedAffirmationForToday();
     if (pinnedToday) {
       setAffirmation(pinnedToday);
+      markAffirmationSeen(pinnedToday.id);
       if (!session.initialized) {
         session.initialized = true;
         if (!resumeVoicePractice) {
@@ -204,8 +243,14 @@ const Today: React.FC = () => {
 
     if (!session.initialized) {
       session.initialized = true;
-      const daily = getDailyAffirmation(custom, settings.focusCategories);
+      const daily = getDailyAffirmation(
+        custom,
+        settings.focusCategories,
+        null,
+        getSeenAffirmationIds(),
+      );
       setAffirmation(daily);
+      markAffirmationSeen(daily.id);
       if (!resumeVoicePractice) {
         markTodayAwaitingPlay(daily.id);
         setPracticeStarted(false);
@@ -226,7 +271,12 @@ const Today: React.FC = () => {
     if (!session.initialized) return;
 
     if (session.affirmationId) {
-      const daily = getDailyAffirmation(custom, settings.focusCategories, pinnedToday);
+      const daily = getDailyAffirmation(
+        custom,
+        settings.focusCategories,
+        pinnedToday,
+        getSeenAffirmationIds(),
+      );
       if (daily.id === session.affirmationId) {
         setAffirmation(daily);
         return;
@@ -269,11 +319,13 @@ const Today: React.FC = () => {
       if (!practiceStarted) {
         const practice = recordPractice();
         setStreak(practice.currentStreak);
+        setWeekHistory(getWeekPracticeHistory());
         markTodayPracticeStarted(affirmation.id);
         setPracticeStarted(true);
       }
       speakDailyAffirmation(affirmation, () => {
         setSessionComplete(true);
+        finishFreePreviewIfNeeded();
         window.setTimeout(() => setSessionComplete(false), 3000);
       });
       return;
@@ -288,15 +340,17 @@ const Today: React.FC = () => {
     stopSpeaking();
     endVoicePractice();
     setGeneratingAffirmation(true);
+    setGenerateError('');
     setSessionComplete(false);
 
     try {
       const useAi = isOpenAiConfigured();
       const next = useAi
         ? await generateNextAffirmation(settings.focusCategories)
-        : getRandomAffirmation(custom, settings.focusCategories);
+        : getRandomAffirmation(custom, settings.focusCategories, getSeenAffirmationIds());
 
       setAffirmation(next);
+      markAffirmationSeen(next.id);
       void startPractice(next, settings.voiceEnabled);
 
       try {
@@ -305,7 +359,7 @@ const Today: React.FC = () => {
         // Haptics unavailable on web
       }
     } catch {
-      // Generation failed; leave current affirmation in place
+      setGenerateError("Couldn't generate another line. Try again.");
     } finally {
       setGeneratingAffirmation(false);
     }
@@ -321,10 +375,14 @@ const Today: React.FC = () => {
   };
 
   const handleShare = async () => {
-    const shared = await shareAffirmation(affirmation.text);
+    const shared = await shareAffirmation(affirmation.text, affirmation.category);
     if (shared) {
-      setShareToast('Shared!');
-      setTimeout(() => setShareToast(''), 2000);
+      setToastMessage('Shared!');
+      try {
+        await Haptics.impact({ style: ImpactStyle.Light });
+      } catch {
+        // Haptics unavailable on web
+      }
     }
   };
 
@@ -332,14 +390,21 @@ const Today: React.FC = () => {
     ? `${streak} day streak`
     : 'Start your streak today';
 
+  const weekdayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const weekDots = weekHistory.map((day) => {
+    const weekday = weekdayLabels[new Date(`${day.date}T12:00:00`).getDay()];
+    return { ...day, weekday };
+  });
+
   const practiceHint = getTodayPracticeHint(
     settings.voiceEnabled,
     settings.repeatMode,
     settings.repeatCount,
+    voicePracticeActive ? playProgress : null,
   );
 
   const primaryLabel = voicePracticeActive
-    ? 'Pause'
+    ? 'Stop'
     : settings.voiceEnabled
       ? practiceStarted
         ? 'Listen again'
@@ -349,7 +414,7 @@ const Today: React.FC = () => {
         : 'Begin today';
 
   const primaryIcon = voicePracticeActive
-    ? pause
+    ? stopCircle
     : settings.voiceEnabled
       ? volumeHigh
       : play;
@@ -386,6 +451,17 @@ const Today: React.FC = () => {
             <IonText color="medium">
               <p>{streakLabel}</p>
             </IonText>
+            <div className="today-week" aria-label="This week's practice">
+              {weekDots.map((day) => (
+                <div
+                  key={day.date}
+                  className={`today-week-day${day.practiced ? ' practiced' : ''}${day.isToday ? ' today' : ''}`}
+                >
+                  <span>{day.weekday}</span>
+                  <i />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -401,10 +477,38 @@ const Today: React.FC = () => {
           {practiceHint && voicePracticeActive && (
             <p className="repeat-hint repeat-hint--active">{practiceHint}</p>
           )}
+          {voicePracticeActive && playProgress && (
+            <div
+              className="today-listen-meter"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(
+                ((playProgress.total > 0
+                  ? (playProgress.current - 1 + (playProgress.fraction ?? 0)) / playProgress.total
+                  : playProgress.fraction ?? 0) * 100),
+              )}
+              aria-label="Listening progress"
+            >
+              <div
+                className="today-listen-meter-fill"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.max(
+                      0,
+                      (playProgress.total > 0
+                        ? (playProgress.current - 1 + (playProgress.fraction ?? 0)) / playProgress.total
+                        : playProgress.fraction ?? 0) * 100,
+                    ),
+                  )}%`,
+                }}
+              />
+            </div>
+          )}
           {practiceHint && !settings.voiceEnabled && (
             <p className="repeat-hint">{practiceHint}</p>
           )}
-          {shareToast && <p className="today-share-toast">{shareToast}</p>}
         </div>
 
         <div className="today-primary-section">
@@ -453,7 +557,27 @@ const Today: React.FC = () => {
             )}
             {generatingAffirmation ? 'Generating…' : 'Another line'}
           </IonButton>
+          {generateError && (
+            <p className="today-generate-error">
+              {generateError}{' '}
+              <button
+                type="button"
+                className="today-generate-retry"
+                onClick={() => void handleNewAffirmation()}
+              >
+                Retry
+              </button>
+            </p>
+          )}
         </div>
+
+        <IonToast
+          isOpen={Boolean(toastMessage)}
+          message={toastMessage}
+          duration={2000}
+          position="bottom"
+          onDidDismiss={() => setToastMessage('')}
+        />
       </IonContent>
     </IonPage>
   );

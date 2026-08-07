@@ -24,8 +24,23 @@ const todayViewSession: TodayViewSession = {
   voiceSnapshot: null,
 };
 
+const voicePracticeListeners = new Set<() => void>();
+
+function emitVoicePracticeChange(): void {
+  voicePracticeListeners.forEach((listener) => listener());
+}
+
 export function getTodayViewSession(): TodayViewSession {
   return todayViewSession;
+}
+
+export function isTodayVoicePracticeActive(): boolean {
+  return todayViewSession.voicePracticeActive;
+}
+
+export function subscribeTodayVoicePractice(listener: () => void): () => void {
+  voicePracticeListeners.add(listener);
+  return () => voicePracticeListeners.delete(listener);
 }
 
 export function resetTodayViewSession(): void {
@@ -34,6 +49,7 @@ export function resetTodayViewSession(): void {
   todayViewSession.voicePracticeActive = false;
   todayViewSession.affirmationId = null;
   todayViewSession.voiceSnapshot = null;
+  emitVoicePracticeChange();
 }
 
 export function markTodayPracticeStarted(affirmationId: string): void {
@@ -45,10 +61,13 @@ export function markTodayAwaitingPlay(affirmationId: string): void {
   todayViewSession.awaitingPlay = true;
   todayViewSession.voicePracticeActive = false;
   todayViewSession.affirmationId = affirmationId;
+  emitVoicePracticeChange();
 }
 
 export function setTodayVoicePracticeActive(active: boolean): void {
+  if (todayViewSession.voicePracticeActive === active) return;
   todayViewSession.voicePracticeActive = active;
+  emitVoicePracticeChange();
 }
 
 export function setTodayVoiceSnapshot(snapshot: VoicePlaybackSnapshot | null): void {

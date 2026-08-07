@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1136B3E8341FE733DD6AAC7F /* AffirmEazeWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 45173C6AE3C9FF8CA5E26068 /* AffirmEazeWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1ABE0476D1D425AFC3E3B61E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2F6187567D98CA3FD0EDE761 /* Foundation.framework */; };
+		24627DCFAD29D65E014A8820 /* TodayWidgetPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C1580C5948F3ED47B2BCE0B /* TodayWidgetPlugin.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
@@ -16,10 +19,39 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		B7A1E0012A1B2C3D004EE86E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B7A1E0022A1B2C3D004EE86E /* PrivacyInfo.xcprivacy */; };
+		E2ED49D793C0350FC02B7396 /* AffirmEazeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05590482CC1D71559DFD5859 /* AffirmEazeWidget.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		609CCE3EDEDFF6B12739ED55 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ABEF41F1C87444E120E0BFE2;
+			remoteInfo = AffirmEazeWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E2D564409DEA1B345CA68F1A /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				1136B3E8341FE733DD6AAC7F /* AffirmEazeWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		05590482CC1D71559DFD5859 /* AffirmEazeWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AffirmEazeWidget.swift; path = AffirmEazeWidget.swift; sourceTree = "<group>"; };
+		2C1580C5948F3ED47B2BCE0B /* TodayWidgetPlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TodayWidgetPlugin.swift; path = TodayWidgetPlugin.swift; sourceTree = "<group>"; };
+		2F6187567D98CA3FD0EDE761 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		45173C6AE3C9FF8CA5E26068 /* AffirmEazeWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AffirmEazeWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -43,13 +75,31 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D9E0835AE5905A2FEDAC9E09 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1ABE0476D1D425AFC3E3B61E /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1D106A8FAF0CF26FECA58069 /* AffirmEazeWidget */ = {
+			isa = PBXGroup;
+			children = (
+				05590482CC1D71559DFD5859 /* AffirmEazeWidget.swift */,
+			);
+			name = AffirmEazeWidget;
+			path = AffirmEazeWidget;
+			sourceTree = "<group>";
+		};
 		27E2DDA53C4D2A4D1A88CE4A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */,
+				B7F5CF889364C6E1EBCC0B32 /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -61,6 +111,7 @@
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
+				1D106A8FAF0CF26FECA58069 /* AffirmEazeWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -68,6 +119,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				45173C6AE3C9FF8CA5E26068 /* AffirmEazeWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -84,6 +136,7 @@
 				B7A1E0022A1B2C3D004EE86E /* PrivacyInfo.xcprivacy */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
+				2C1580C5948F3ED47B2BCE0B /* TodayWidgetPlugin.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -95,6 +148,14 @@
 				AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */,
 			);
 			name = Pods;
+			sourceTree = "<group>";
+		};
+		B7F5CF889364C6E1EBCC0B32 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				2F6187567D98CA3FD0EDE761 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -109,15 +170,34 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
+				E2D564409DEA1B345CA68F1A /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F70791EDC92D4F018BFBC284 /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		ABEF41F1C87444E120E0BFE2 /* AffirmEazeWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1B83E34F637FB411476FB44D /* Build configuration list for PBXNativeTarget "AffirmEazeWidget" */;
+			buildPhases = (
+				8D61DDCD14DD513FC2138638 /* Sources */,
+				D9E0835AE5905A2FEDAC9E09 /* Frameworks */,
+				28E2BAE2C1416C6EC175A43D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AffirmEazeWidget;
+			productName = AffirmEazeWidget;
+			productReference = 45173C6AE3C9FF8CA5E26068 /* AffirmEazeWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -150,11 +230,19 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				ABEF41F1C87444E120E0BFE2 /* AffirmEazeWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		28E2BAE2C1416C6EC175A43D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3021FED79650016851F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -234,10 +322,28 @@
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				24627DCFAD29D65E014A8820 /* TodayWidgetPlugin.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8D61DDCD14DD513FC2138638 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2ED49D793C0350FC02B7396 /* AffirmEazeWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F70791EDC92D4F018BFBC284 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = AffirmEazeWidget;
+			target = ABEF41F1C87444E120E0BFE2 /* AffirmEazeWidget */;
+			targetProxy = 609CCE3EDEDFF6B12739ED55 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -259,6 +365,31 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		0490D97F192D8BA982A38A68 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = AffirmEazeWidget/AffirmEazeWidget.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AffirmEazeWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.affirmationflow.app.widget;
+				PRODUCT_NAME = AffirmEazeWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		504EC3141FED79650016851F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -380,6 +511,7 @@
 			baseConfigurationReference = FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = App/Info.plist;
@@ -403,6 +535,7 @@
 			baseConfigurationReference = AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = App/Info.plist;
@@ -420,9 +553,42 @@
 			};
 			name = Release;
 		};
+		C4B57D9FA72F05267475A74C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = AffirmEazeWidget/AffirmEazeWidget.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AffirmEazeWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.affirmationflow.app.widget;
+				PRODUCT_NAME = AffirmEazeWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		1B83E34F637FB411476FB44D /* Build configuration list for PBXNativeTarget "AffirmEazeWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0490D97F192D8BA982A38A68 /* Release */,
+				C4B57D9FA72F05267475A74C /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

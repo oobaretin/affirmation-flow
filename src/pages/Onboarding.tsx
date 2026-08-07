@@ -2,22 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
   IonButton,
-  IonCheckbox,
   IonContent,
-  IonHeader,
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonPage,
   IonRange,
-  IonText,
-  IonTitle,
-  IonToggle,
-  IonToolbar,
 } from '@ionic/react';
-import { arrowForward, stopCircle, volumeHigh } from 'ionicons/icons';
+import { arrowForward, checkmarkCircle, stopCircle, volumeHigh } from 'ionicons/icons';
 import AppLogo from '../components/AppLogo';
+import { ELEVENLABS_VOICES, DEFAULT_ELEVENLABS_VOICE_ID } from '../constants/elevenLabsVoices';
 import { CATEGORIES, getDailyAffirmation } from '../data/affirmations';
 import { useSettings } from '../hooks/useSettings';
 import { requestNotificationPermission, scheduleDailyNotification } from '../services/notifications';
@@ -27,9 +21,18 @@ import { previewVoice, stopSpeaking } from '../services/voice';
 import { DEFAULT_SETTINGS } from '../types/settings';
 import './Onboarding.css';
 
-const STEP_TITLES = ['Focus', 'Listen', 'Ready'] as const;
+const STEP_TITLES = ['Focus', 'Voice', 'Reminders'] as const;
 const STEPS = ['focus', 'listen', 'ready'] as const;
 const MAX_FOCUS_AREAS = 2;
+
+const CATEGORY_BLURBS: Record<string, string> = {
+  'Self-Love': 'Kindness toward yourself',
+  Confidence: 'Stand in your strength',
+  Gratitude: "Notice what's already good",
+  Peace: 'Calm mind and body',
+  Abundance: 'Open to possibility',
+  Health: 'Care for your energy',
+};
 
 const Onboarding: React.FC = () => {
   const history = useHistory();
@@ -37,13 +40,14 @@ const Onboarding: React.FC = () => {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [focusCategories, setFocusCategories] = useState<string[]>([]);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState(DEFAULT_ELEVENLABS_VOICE_ID);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notificationHour, setNotificationHour] = useState(8);
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const [previewError, setPreviewError] = useState('');
+  const [permissionHint, setPermissionHint] = useState('');
 
-  const voiceReady = isElevenLabsConfigured() && voiceEnabled;
+  const voiceReady = isElevenLabsConfigured();
   const previewText = useMemo(
     () => getDailyAffirmation([], focusCategories.length > 0 ? focusCategories : ['Self-Love']).text,
     [focusCategories],
@@ -61,12 +65,15 @@ const Onboarding: React.FC = () => {
     });
   };
 
-  const playFirstAffirmation = async () => {
+  const playFirstAffirmation = async (voiceId = elevenLabsVoiceId) => {
     if (!voiceReady) return;
 
     setPreviewError('');
     setPreviewPlaying(true);
-    const previewOptions = buildVoiceOptions(DEFAULT_SETTINGS);
+    const previewOptions = buildVoiceOptions({
+      ...DEFAULT_SETTINGS,
+      elevenLabsVoiceId: voiceId,
+    });
 
     try {
       await previewVoice(previewText, previewOptions);
@@ -75,6 +82,12 @@ const Onboarding: React.FC = () => {
     } finally {
       setPreviewPlaying(false);
     }
+  };
+
+  const selectVoice = (voiceId: string) => {
+    setElevenLabsVoiceId(voiceId);
+    stopSpeaking();
+    void playFirstAffirmation(voiceId);
   };
 
   useEffect(() => {
@@ -93,64 +106,80 @@ const Onboarding: React.FC = () => {
       focusCategories,
       repeatCount: 3,
       repeatMode: 'fixed' as const,
-      voiceEnabled,
+      voiceEnabled: true,
+      elevenLabsVoiceId,
       notificationsEnabled,
       notificationHour,
       notificationMinute: 0,
     };
 
-    completeOnboarding(settings);
-    history.replace('/today');
-
     if (notificationsEnabled) {
       try {
+        setPermissionHint('Allow notifications so we can nudge you at your chosen time.');
         const granted = await requestNotificationPermission();
-        if (granted) {
+        if (!granted) {
+          settings.notificationsEnabled = false;
+          setPermissionHint('Reminders stay off until you allow notifications in Settings.');
+        } else {
           await scheduleDailyNotification({
             name: settings.name,
-            notificationsEnabled: settings.notificationsEnabled,
+            notificationsEnabled: true,
             notificationHour: settings.notificationHour,
             notificationMinute: 0,
             focusCategories: settings.focusCategories,
           });
         }
       } catch {
-        // Notifications unavailable on this platform
+        settings.notificationsEnabled = false;
       }
     }
+
+    completeOnboarding(settings);
+    history.replace('/today');
   };
 
   const currentStep = STEPS[step];
+  const reminderLabel =
+    notificationHour > 12
+      ? `${notificationHour - 12}:00 PM`
+      : `${notificationHour === 0 ? 12 : notificationHour}:00 ${notificationHour >= 12 ? 'PM' : 'AM'}`;
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>{STEP_TITLES[step]}</IonTitle>
-        </IonToolbar>
-      </IonHeader>
       <IonContent fullscreen className="onboarding-content">
-        <div className="onboarding-progress">
+        <div className="onboarding-progress" aria-label={`Step ${step + 1} of ${STEPS.length}`}>
           {STEPS.map((_, i) => (
             <span key={i} className={`dot ${i <= step ? 'active' : ''}`} />
           ))}
         </div>
+        <p className="onboarding-step-label">{STEP_TITLES[step]}</p>
 
         {currentStep === 'focus' && (
           <div className="onboarding-step">
             <AppLogo size="lg" className="onboarding-logo" />
             <h1>What matters to you?</h1>
-            <p>Pick up to two focus areas for your daily affirmations.</p>
-            <div className="category-grid">
-              {CATEGORIES.map((category) => (
-                <IonItem key={category} lines="none" className="category-chip">
-                  <IonCheckbox
-                    checked={focusCategories.includes(category)}
-                    onIonChange={() => toggleCategory(category)}
-                  />
-                  <IonLabel>{category}</IonLabel>
-                </IonItem>
-              ))}
+            <p>Pick up to two focus areas. We’ll shape your daily line around them.</p>
+            <div className="focus-card-grid" role="group" aria-label="Focus areas">
+              {CATEGORIES.map((category) => {
+                const selected = focusCategories.includes(category);
+                const disabled = !selected && focusCategories.length >= MAX_FOCUS_AREAS;
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    className={`focus-card${selected ? ' selected' : ''}`}
+                    aria-pressed={selected}
+                    disabled={disabled}
+                    onClick={() => toggleCategory(category)}
+                  >
+                    <span className="focus-card-title">{category}</span>
+                    <span className="focus-card-blurb">{CATEGORY_BLURBS[category]}</span>
+                    {selected && (
+                      <IonIcon className="focus-card-check" icon={checkmarkCircle} aria-hidden="true" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <IonButton
               expand="block"
@@ -168,7 +197,7 @@ const Onboarding: React.FC = () => {
 
         {currentStep === 'listen' && (
           <div className="onboarding-step onboarding-step--listen">
-            <h1>Your first affirmation</h1>
+            <h1>Choose your voice</h1>
             <p className="onboarding-preview-category">
               {focusCategories[0] ?? 'Self-Love'}
             </p>
@@ -176,8 +205,23 @@ const Onboarding: React.FC = () => {
             {voiceReady ? (
               <>
                 <p className="onboarding-voice-note">
-                  {previewPlaying ? 'Playing…' : 'Tap below to hear it again.'}
+                  {previewPlaying ? 'Playing…' : 'Tap a voice to hear this line.'}
                 </p>
+                <div className="onboarding-voice-chips" role="radiogroup" aria-label="Voice">
+                  {ELEVENLABS_VOICES.map((voice) => (
+                    <button
+                      key={voice.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={elevenLabsVoiceId === voice.id}
+                      className={`onboarding-voice-chip${elevenLabsVoiceId === voice.id ? ' selected' : ''}`}
+                      onClick={() => selectVoice(voice.id)}
+                    >
+                      <strong>{voice.name}</strong>
+                      <span>{voice.description}</span>
+                    </button>
+                  ))}
+                </div>
                 <IonButton expand="block" fill="outline" onClick={() => void playFirstAffirmation()}>
                   <IonIcon slot="start" icon={previewPlaying ? stopCircle : volumeHigh} />
                   {previewPlaying ? 'Playing…' : 'Hear again'}
@@ -188,7 +232,7 @@ const Onboarding: React.FC = () => {
               </>
             ) : (
               <p className="onboarding-voice-note">
-                Voice will be available once premium is active.
+                Voice preview isn’t configured on this build yet. You can still continue.
               </p>
             )}
             <IonButton expand="block" onClick={() => setStep(2)}>
@@ -200,8 +244,8 @@ const Onboarding: React.FC = () => {
 
         {currentStep === 'ready' && (
           <div className="onboarding-step">
-            <h1>Almost ready</h1>
-            <p>Name and reminders — adjust anytime in Settings.</p>
+            <h1>Make it yours</h1>
+            <p>A name for greetings, and a gentle daily nudge — both optional.</p>
             <IonItem className="onboarding-input">
               <IonInput
                 label="Your name (optional)"
@@ -211,39 +255,44 @@ const Onboarding: React.FC = () => {
                 onIonInput={(e) => setName(e.detail.value ?? '')}
               />
             </IonItem>
-            <IonItem lines="none">
-              <IonLabel>Voice affirmations</IonLabel>
-              <IonToggle
-                checked={voiceEnabled}
-                onIonChange={(e) => setVoiceEnabled(e.detail.checked)}
-              />
-            </IonItem>
-            <IonItem lines="none">
-              <IonLabel>Daily reminder</IonLabel>
-              <IonToggle
-                checked={notificationsEnabled}
-                onIonChange={(e) => setNotificationsEnabled(e.detail.checked)}
-              />
-            </IonItem>
-            {notificationsEnabled && (
-              <>
-                <IonText color="medium">
+
+            <div className="onboarding-reminder-card">
+              <div className="onboarding-reminder-header">
+                <div>
+                  <strong>Daily reminder</strong>
+                  <p>
+                    A quiet nudge at your time so today’s affirmation doesn’t get lost.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={`onboarding-reminder-toggle${notificationsEnabled ? ' on' : ''}`}
+                  aria-pressed={notificationsEnabled}
+                  onClick={() => setNotificationsEnabled((prev) => !prev)}
+                >
+                  {notificationsEnabled ? 'On' : 'Off'}
+                </button>
+              </div>
+              {notificationsEnabled && (
+                <>
                   <p className="time-label">Reminder time</p>
-                </IonText>
-                <IonRange
-                  min={5}
-                  max={22}
-                  step={1}
-                  value={notificationHour}
-                  onIonChange={(e) => setNotificationHour(e.detail.value as number)}
-                  pin
-                />
-                <p className="time-display">
-                  {notificationHour > 12 ? notificationHour - 12 : notificationHour}:00{' '}
-                  {notificationHour >= 12 ? 'PM' : 'AM'}
-                </p>
-              </>
+                  <IonRange
+                    min={5}
+                    max={22}
+                    step={1}
+                    value={notificationHour}
+                    onIonChange={(e) => setNotificationHour(e.detail.value as number)}
+                    pin
+                  />
+                  <p className="time-display">{reminderLabel}</p>
+                </>
+              )}
+            </div>
+
+            {permissionHint && (
+              <p className="onboarding-voice-note">{permissionHint}</p>
             )}
+
             <IonButton expand="block" onClick={() => void finish()}>
               Start My Journey
             </IonButton>

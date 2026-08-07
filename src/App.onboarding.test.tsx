@@ -37,9 +37,8 @@ describe('App onboarding flow', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    const focusCheckbox = document.querySelector('ion-checkbox');
-    expect(focusCheckbox).toBeTruthy();
-    await user.click(focusCheckbox!);
+    const focusCard = await screen.findByRole('button', { name: /Self-Love/i });
+    await user.click(focusCard);
     await user.click(screen.getByText('Continue'));
 
     await waitFor(() => {

@@ -14,6 +14,7 @@ import {
   IonModal,
   IonPage,
   IonTitle,
+  IonToast,
   IonToolbar,
   useIonViewWillEnter,
 } from '@ionic/react';
@@ -25,7 +26,7 @@ import {
   heartOutline,
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import { CATEGORIES, type Affirmation } from '../data/affirmations';
+import { CATEGORIES, AFFIRMATIONS, type Affirmation } from '../data/affirmations';
 import { useCustomAffirmations } from '../hooks/useCustomAffirmations';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSettings } from '../hooks/useSettings';
@@ -35,7 +36,7 @@ import { buildVoiceOptions } from '../services/voiceProfiles';
 import { ensurePlaybackContinues, getActiveSpeechText, isSpeaking, speakAffirmation, stopSpeaking } from '../services/voice';
 import './MyAffirmations.css';
 
-type SavedFilter = 'all' | 'favorites' | 'custom';
+type LibraryFilter = 'library' | 'saved' | 'custom';
 
 const CATEGORY_ORDER: string[] = [...CATEGORIES, 'Custom'];
 
@@ -62,12 +63,14 @@ function AffirmationRow({
   affirmation,
   speakingId,
   saved,
+  onPrimaryAction,
   onOpenActions,
   onToggleFavorite,
 }: {
   affirmation: Affirmation;
   speakingId: string | null;
   saved: boolean;
+  onPrimaryAction: (item: Affirmation) => void;
   onOpenActions: (item: Affirmation) => void;
   onToggleFavorite: (item: Affirmation) => void;
 }) {
@@ -78,7 +81,7 @@ function AffirmationRow({
       button
       lines="full"
       className={`affirmation-row${isSpeakingRow ? ' affirmation-row--speaking' : ''}`}
-      onClick={() => onOpenActions(affirmation)}
+      onClick={() => onPrimaryAction(affirmation)}
     >
       <IonLabel className="ion-text-wrap affirmation-row-label">
         <p className="affirmation-row-text">{affirmation.text}</p>
@@ -118,7 +121,7 @@ type CustomAffirmationFormProps = {
 const CustomAffirmationForm = memo(function CustomAffirmationForm({ onAdd }: CustomAffirmationFormProps) {
   const customInputRef = useRef<HTMLTextAreaElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [saveToast, setSaveToast] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -141,8 +144,7 @@ const CustomAffirmationForm = memo(function CustomAffirmationForm({ onAdd }: Cus
     if (customInputRef.current) {
       customInputRef.current.value = '';
     }
-    setSaveToast('Affirmation saved');
-    setTimeout(() => setSaveToast(''), 2000);
+    setToastMessage('Affirmation saved');
     closeModal();
 
     try {
@@ -173,7 +175,6 @@ const CustomAffirmationForm = memo(function CustomAffirmationForm({ onAdd }: Cus
           <IonIcon slot="start" icon={add} />
           Add custom affirmation
         </IonButton>
-        {saveToast && <p className="custom-save-toast">{saveToast}</p>}
       </div>
 
       <IonModal
@@ -211,6 +212,14 @@ const CustomAffirmationForm = memo(function CustomAffirmationForm({ onAdd }: Cus
           />
         </IonContent>
       </IonModal>
+
+      <IonToast
+        isOpen={Boolean(toastMessage)}
+        message={toastMessage}
+        duration={2000}
+        position="bottom"
+        onDidDismiss={() => setToastMessage('')}
+      />
     </>
   );
 });
@@ -221,11 +230,18 @@ const MyAffirmations: React.FC = () => {
   const { favorites, isFavorite, toggleFavorite, removeFavorite } = useFavorites();
   const { custom, addCustom, removeCustom } = useCustomAffirmations();
   const [speakingId, setSpeakingId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<SavedFilter>('all');
+  const [filter, setFilter] = useState<LibraryFilter>('library');
   const [actionTarget, setActionTarget] = useState<Affirmation | null>(null);
   const favoritesByCategory = useMemo(() => groupByCategory(favorites), [favorites]);
+  const libraryByCategory = useMemo(() => {
+    const focus = settings.focusCategories;
+    const focused = focus.length > 0
+      ? AFFIRMATIONS.filter((item) => focus.includes(item.category))
+      : AFFIRMATIONS;
+    return groupByCategory(focused);
+  }, [settings.focusCategories]);
 
-  const handleFilterChange = useCallback((value: SavedFilter) => {
+  const handleFilterChange = useCallback((value: LibraryFilter) => {
     setFilter(value);
     window.setTimeout(() => ensurePlaybackContinues(), 50);
   }, []);
@@ -272,6 +288,14 @@ const MyAffirmations: React.FC = () => {
   const handleUseToday = (affirmation: Affirmation) => {
     queueTodayAffirmation(affirmation, true);
     history.push('/today', { affirmation });
+  };
+
+  const handleRowPrimary = (affirmation: Affirmation) => {
+    if (settings.voiceEnabled) {
+      void handleSpeak(affirmation.id, affirmation.text);
+      return;
+    }
+    handleUseToday(affirmation);
   };
 
   const handleRemoveFavorite = async (id: string) => {
@@ -335,7 +359,7 @@ const MyAffirmations: React.FC = () => {
           void handleRemoveCustom(item.id);
         },
       });
-    } else {
+    } else if (isFavorite(item.id)) {
       buttons.push({
         text: 'Remove from Saved',
         role: 'destructive',
@@ -354,105 +378,119 @@ const MyAffirmations: React.FC = () => {
     return buttons;
   };
 
-  const showFavorites = filter === 'all' || filter === 'favorites';
-  const showCustom = filter === 'all' || filter === 'custom';
-  const emptyAll = favorites.length === 0 && custom.length === 0;
+  const showLibrary = filter === 'library';
+  const showSaved = filter === 'saved';
+  const showCustom = filter === 'custom';
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Saved</IonTitle>
+          <IonTitle>Library</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen className="my-affirmations-content" scrollY>
         <div className="saved-filter-chips">
-          {(['all', 'favorites', 'custom'] as SavedFilter[]).map((value) => (
+          {([
+            { value: 'library', label: 'Browse' },
+            { value: 'saved', label: 'Saved' },
+            { value: 'custom', label: 'Custom' },
+          ] as const).map((item) => (
             <IonChip
-              key={value}
-              outline={filter !== value}
-              color={filter === value ? 'primary' : undefined}
-              onClick={() => handleFilterChange(value)}
+              key={item.value}
+              outline={filter !== item.value}
+              color={filter === item.value ? 'primary' : undefined}
+              onClick={() => handleFilterChange(item.value)}
             >
-              {value === 'all' ? 'All' : value === 'favorites' ? 'Favorites' : 'Custom'}
+              {item.label}
             </IonChip>
           ))}
         </div>
 
-        {emptyAll ? (
-          <>
-            <div className="my-affirmations-empty">
-              <IonIcon icon={heart} aria-hidden="true" />
-              <h3>Nothing saved yet</h3>
-              <p>Tap the heart on Today to save affirmations, or add your own below.</p>
-            </div>
-            <section className="my-affirmations-section">
-              <CustomAffirmationForm onAdd={handleAddCustom} />
-            </section>
-          </>
-        ) : (
-          <>
-            {showFavorites && favorites.length > 0 && (
-              <section className="my-affirmations-section">
-                {filter === 'all' && <h2>Favorites</h2>}
-                {filter === 'favorites' && (
-                  <p className="section-hint">Saved from Today, grouped by focus area.</p>
-                )}
-                {favoritesByCategory.map(([category, items]) => (
-                  <div key={category} className="my-affirmations-category-group">
-                    <h3 className="my-affirmations-category-label">{category}</h3>
-                    <IonList lines="full" className="my-affirmations-list">
-                      {items.map((affirmation) => (
-                        <AffirmationRow
-                          key={affirmation.id}
-                          affirmation={affirmation}
-                          speakingId={speakingId}
-                          saved
-                          onOpenActions={setActionTarget}
-                          onToggleFavorite={toggleFavorite}
-                        />
-                      ))}
-                    </IonList>
-                  </div>
-                ))}
-              </section>
-            )}
+        {showLibrary && (
+          <section className="my-affirmations-section">
+            <p className="section-hint">
+              {settings.focusCategories.length > 0
+                ? 'Lines from your focus areas. Tap to listen.'
+                : 'Browse the full collection. Tap to listen.'}
+            </p>
+            {libraryByCategory.map(([category, items]) => (
+              <div key={category} className="my-affirmations-category-group">
+                <h3 className="my-affirmations-category-label">{category}</h3>
+                <IonList lines="full" className="my-affirmations-list">
+                  {items.map((affirmation) => (
+                    <AffirmationRow
+                      key={affirmation.id}
+                      affirmation={affirmation}
+                      speakingId={speakingId}
+                      saved={isFavorite(affirmation.id)}
+                      onPrimaryAction={handleRowPrimary}
+                      onOpenActions={setActionTarget}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  ))}
+                </IonList>
+              </div>
+            ))}
+          </section>
+        )}
 
-            {showFavorites && filter === 'favorites' && favorites.length === 0 && (
+        {showSaved && (
+          <section className="my-affirmations-section">
+            {favorites.length === 0 ? (
               <div className="my-affirmations-empty">
                 <IonIcon icon={heart} aria-hidden="true" />
-                <h3>No favorites yet</h3>
-                <p>Tap the heart on Today to save affirmations here.</p>
+                <h3>Nothing saved yet</h3>
+                <p>Tap the heart on Today or in Browse to save lines here.</p>
               </div>
-            )}
-
-            {showCustom && (
-              <section className="my-affirmations-section">
-                {filter === 'all' && <h2>Custom</h2>}
-                <CustomAffirmationForm onAdd={handleAddCustom} />
-                {custom.length === 0 ? (
-                  <div className="my-affirmations-empty">
-                    <IonIcon icon={createOutline} aria-hidden="true" />
-                    <h3>No custom affirmations yet</h3>
-                    <p>Tap the button above to add your first one.</p>
-                  </div>
-                ) : (
+            ) : (
+              favoritesByCategory.map(([category, items]) => (
+                <div key={category} className="my-affirmations-category-group">
+                  <h3 className="my-affirmations-category-label">{category}</h3>
                   <IonList lines="full" className="my-affirmations-list">
-                    {custom.map((affirmation) => (
+                    {items.map((affirmation) => (
                       <AffirmationRow
                         key={affirmation.id}
                         affirmation={affirmation}
                         speakingId={speakingId}
-                        saved={isFavorite(affirmation.id)}
+                        saved
+                        onPrimaryAction={handleRowPrimary}
                         onOpenActions={setActionTarget}
                         onToggleFavorite={toggleFavorite}
                       />
                     ))}
                   </IonList>
-                )}
-              </section>
+                </div>
+              ))
             )}
-          </>
+          </section>
+        )}
+
+        {showCustom && (
+          <section className="my-affirmations-section">
+            <CustomAffirmationForm onAdd={handleAddCustom} />
+            {custom.length === 0 ? (
+              <div className="my-affirmations-empty">
+                <IonIcon icon={createOutline} aria-hidden="true" />
+                <h3>No custom affirmations yet</h3>
+                <p>Tap the button above to add your first one.</p>
+              </div>
+            ) : (
+              <IonList lines="full" className="my-affirmations-list">
+                {custom.map((affirmation) => (
+                  <AffirmationRow
+                    key={affirmation.id}
+                    affirmation={affirmation}
+                    speakingId={speakingId}
+                    saved={isFavorite(affirmation.id)}
+                    onPrimaryAction={handleRowPrimary}
+                    onOpenActions={setActionTarget}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                ))}
+              </IonList>
+            )}
+          </section>
         )}
 
         <IonActionSheet

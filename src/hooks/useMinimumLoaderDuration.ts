@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
-/** Long enough for one calm breath cycle of the logo animation (~6.5s). */
-export const LOADER_MIN_DURATION_MS = 5200;
+/** Short brand beat — long enough to register, short enough not to block. */
+export const LOADER_MIN_DURATION_MS = 1800;
 
 export function useMinimumLoaderDuration(
   isLoading: boolean,

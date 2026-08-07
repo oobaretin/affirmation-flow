@@ -15,7 +15,7 @@ import {
 import AppLogoLoader from './components/AppLogoLoader';
 import { useMinimumLoaderDuration } from './hooks/useMinimumLoaderDuration';
 import { IonReactRouter } from '@ionic/react-router';
-import { settingsOutline, sunny, heart } from 'ionicons/icons';
+import { settingsOutline, sunny, libraryOutline } from 'ionicons/icons';
 import Today from './pages/Today';
 import MyAffirmations from './pages/MyAffirmations';
 import Settings from './pages/Settings';
@@ -30,8 +30,10 @@ import Paywall from './pages/Paywall';
 import { useSettings, SettingsProvider } from './hooks/useSettings';
 import { CustomAffirmationsProvider } from './hooks/useCustomAffirmations';
 import { FavoritesProvider } from './hooks/useFavorites';
+import { useFreePreview } from './hooks/useFreePreview';
 import { SubscriptionProvider, useSubscription } from './hooks/useSubscription';
 import { useKeyboardVisible } from './hooks/useKeyboardVisible';
+import { useVoicePracticeActive } from './hooks/useVoicePracticeActive';
 import { ensurePlaybackContinues } from './services/voice';
 import './App.css';
 
@@ -63,19 +65,21 @@ const RoutePlaybackGuard: React.FC = () => {
 
 const MainTabBar: React.FC = () => {
   const keyboardVisible = useKeyboardVisible();
+  const voicePracticeActive = useVoicePracticeActive();
+  const hideTabBar = keyboardVisible || voicePracticeActive;
 
   return (
     <IonTabBar
       slot="bottom"
-      className={keyboardVisible ? 'tab-bar-keyboard-hidden' : undefined}
+      className={hideTabBar ? 'tab-bar-hidden' : undefined}
     >
       <IonTabButton tab="today" href="/today">
         <IonIcon aria-hidden="true" icon={sunny} />
         <IonLabel>Today</IonLabel>
       </IonTabButton>
       <IonTabButton tab="my" href="/my">
-        <IonIcon aria-hidden="true" icon={heart} />
-        <IonLabel>Saved</IonLabel>
+        <IonIcon aria-hidden="true" icon={libraryOutline} />
+        <IonLabel>Library</IonLabel>
       </IonTabButton>
       <IonTabButton tab="settings" href="/settings">
         <IonIcon aria-hidden="true" icon={settingsOutline} />
@@ -88,7 +92,9 @@ const MainTabBar: React.FC = () => {
 const AppRoutes: React.FC = () => {
   const { settings } = useSettings();
   const { loading: subscriptionLoading, isSubscribed } = useSubscription();
+  const { freePreviewConsumed } = useFreePreview();
   const showBootLoader = useMinimumLoaderDuration(subscriptionLoading);
+  const requiresPaywall = !isSubscribed && freePreviewConsumed;
 
   let content: React.ReactNode;
 
@@ -117,7 +123,7 @@ const AppRoutes: React.FC = () => {
         </IonContent>
       </IonPage>
     );
-  } else if (!isSubscribed) {
+  } else if (requiresPaywall) {
     content = (
       <IonRouterOutlet>
         <Route exact path="/paywall">
@@ -165,6 +171,9 @@ const AppRoutes: React.FC = () => {
           </Route>
           <Route exact path="/settings/focus">
             <SettingsFocus />
+          </Route>
+          <Route exact path="/paywall">
+            <Paywall />
           </Route>
           <Route exact path="/privacy">
             <Privacy />

@@ -19,6 +19,57 @@
   margin: 0.75rem 0 0.5rem;
 }
 
+.practice-preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.practice-preset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid rgba(var(--ion-color-primary-rgb), 0.2);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ion-text-color);
+  text-align: left;
+  cursor: pointer;
+}
+
+.practice-preset strong {
+  font-size: 1rem;
+}
+
+.practice-preset span {
+  font-size: 0.82rem;
+  color: var(--ion-color-medium);
+}
+
+.practice-preset.active {
+  border-color: var(--ion-color-primary);
+  background: rgba(var(--ion-color-primary-rgb), 0.08);
+}
+
+.repeat-advanced-toggle {
+  background: none;
+  border: none;
+  color: var(--ion-color-primary);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.repeat-advanced {
+  padding-top: 0.25rem;
+}
+
 .mantra-chips {
   display: flex;
   flex-wrap: wrap;

@@ -37,6 +37,43 @@
   font-weight: 500;
 }
 
+.today-week {
+  display: flex;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+.today-week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 1.4rem;
+}
+
+.today-week-day span {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+}
+
+.today-week-day i {
+  display: block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: rgba(var(--ion-color-medium-rgb, 152, 154, 162), 0.35);
+}
+
+.today-week-day.practiced i {
+  background: var(--ion-color-primary);
+}
+
+.today-week-day.today span {
+  color: var(--ion-color-primary);
+}
+
 .pinned-badge {
   font-weight: 500;
   color: var(--ion-color-medium);
@@ -44,10 +81,22 @@
   letter-spacing: normal;
 }
 
-.today-share-toast {
-  margin: 0.75rem 0 0;
+.today-generate-error {
+  margin: 0.5rem 0 0;
   font-size: 0.85rem;
+  color: var(--ion-color-danger);
+  text-align: center;
+}
+
+.today-generate-retry {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
   color: var(--ion-color-primary);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .affirmation-card {
@@ -76,6 +125,7 @@
 }
 
 .affirmation-text {
+  font-family: var(--font-display);
   font-size: 1.85rem;
   line-height: 1.5;
   font-weight: 300;
@@ -102,6 +152,22 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--ion-color-primary);
+}
+
+.today-listen-meter {
+  width: min(16rem, 70vw);
+  height: 0.35rem;
+  margin: 1rem auto 0;
+  border-radius: 999px;
+  background: rgba(var(--ion-color-primary-rgb), 0.15);
+  overflow: hidden;
+}
+
+.today-listen-meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ion-color-primary);
+  transition: width 0.2s linear;
 }
 
 .today-stop-inline {
